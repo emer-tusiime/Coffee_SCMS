@@ -1,0 +1,21 @@
+order_id,customer_name,product,coffee_type,quantity,unit_price,total_price,payment_method,order_date,country,label
+1001,John Doe,Espresso,Arabica,2,3.50,7.00,Credit Card,2024-01-03,USA,arabica
+1002,Jane Smith,Cappuccino,Robusta,1,4.00,4.00,PayPal,2024-01-05,Canada,robusta
+1003,Mary Johnson,Latte,Arabica,3,4.20,12.60,Cash,2024-01-08,UK,arabica
+1004,Samuel Lee,Americano,Robusta,2,3.00,6.00,Credit Card,2024-01-12,USA,robusta
+1005,Linda Kim,Mocha,Arabica,1,4.50,4.50,PayPal,2024-01-13,Australia,arabica
+1006,James Brown,Espresso,Robusta,2,3.20,6.40,Cash,2024-01-15,Canada,robusta
+1007,Emily Davis,Latte,Arabica,2,4.20,8.40,Credit Card,2024-01-18,UK,arabica
+1008,Michael Wilson,Americano,Arabica,1,3.00,3.00,PayPal,2024-01-19,USA,arabica
+1009,Sarah Miller,Cappuccino,Robusta,3,4.00,12.00,Cash,2024-01-22,Canada,robusta
+1010,David Martinez,Mocha,Arabica,2,4.50,9.00,Credit Card,2024-01-25,Australia,arabica
+1011,Olivia Anderson,Espresso,Arabica,1,3.50,3.50,PayPal,2024-01-27,USA,arabica
+1012,William Thomas,Americano,Robusta,2,3.00,6.00,Cash,2024-01-29,UK,robusta
+1013,Ava Jackson,Latte,Arabica,2,4.20,8.40,Credit Card,2024-02-01,Canada,arabica
+1014,Daniel White,Cappuccino,Robusta,1,4.00,4.00,PayPal,2024-02-03,Australia,robusta
+1015,Charlotte Harris,Mocha,Arabica,3,4.50,13.50,Cash,2024-02-06,USA,arabica
+1016,Henry Clark,Espresso,Robusta,2,3.20,6.40,Credit Card,2024-02-09,Canada,robusta
+1017,Grace Lewis,Latte,Arabica,1,4.20,4.20,PayPal,2024-02-12,UK,arabica
+1018,Jack Walker,Americano,Robusta,3,3.00,9.00,Cash,2024-02-15,USA,robusta
+1019,Mia Hall,Cappuccino,Arabica,2,4.00,8.00,Credit Card,2024-02-17,Australia,arabica
+1020,Lucas Young,Mocha,Robusta,1,4.50,4.50,PayPal,2024-02-19,Canada,robusta

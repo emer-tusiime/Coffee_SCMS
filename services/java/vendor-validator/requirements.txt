@@ -1,0 +1,12 @@
+# Java Vendor Validator Requirements
+
+1. Java 8 or higher (tested up to Java 21).
+2. No external dependencies—standard Java API only.
+3. To compile:
+   javac -d out src/*.java
+4. To run:
+   java -cp out Main <vendorName>
+
+# Example:
+# javac -d out src/*.java
+# java -cp out Main "Acme-Coffee Ltd"
