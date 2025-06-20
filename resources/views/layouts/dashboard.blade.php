@@ -117,7 +117,7 @@
                         </a>
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
-                                <a href="{{ route('admin.production.lines.index') }}" class="nav-link {{ request()->routeIs('admin.production.lines.*') ? 'active' : '' }}">
+                                <a href="{{ route('admin.production.lines.index') }}" class="nav-link {{ request()->routeIs('admin.production.lines.index') ? 'active' : '' }}">
                                     <i class="far fa-circle nav-icon"></i>
                                     <p>Production Lines</p>
                                 </a>

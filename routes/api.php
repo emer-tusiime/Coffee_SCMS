@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ProductController as ApiProductController;
 use App\Http\Controllers\Api\OrderController as ApiOrderController;
-use App\Http\Controllers\Api\SegmentationController;
+// use App\Http\Controllers\Api\SegmentationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -35,8 +35,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('orders', ApiOrderController::class);
 
     // Machine Learning Segmentation & Prediction (example)
-    Route::post('ml/predict', [SegmentationController::class, 'predict']);
-    Route::post('ml/segment', [SegmentationController::class, 'segment']);
+    // Route::post('ml/predict', [SegmentationController::class, 'predict']);
+    // Route::post('ml/segment', [SegmentationController::class, 'segment']);
 
     // Logout
     Route::post('logout', [AuthController::class, 'logout']);

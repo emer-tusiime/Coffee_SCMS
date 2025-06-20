@@ -1,9 +1,13 @@
 @extends('layouts.app')
 
+@section('styles')
+<link href="/css/auth.css" rel="stylesheet">
+@endsection
+
 @section('content')
 <style>
     body {
-        background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80') no-repeat center center fixed;
+        background: url('/images/coffeeBG.jpg') no-repeat center center fixed;
         background-size: cover;
         min-height: 100vh;
         position: relative;
@@ -11,7 +15,7 @@
     .dark-overlay {
         position: fixed;
         top: 0; left: 0; width: 100vw; height: 100vh;
-        background: rgba(30, 20, 10, 0.5);
+        background: rgba(255, 255, 255, 0.25);
         z-index: 0;
     }
     .auth-wrapper {
@@ -23,12 +27,12 @@
         z-index: 1;
     }
     .glass-card {
-        background: rgba(255,255,255,0.85);
+        background: rgba(255, 255, 255, 0.85);
         border-radius: 24px;
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.10);
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
-        border: 1.5px solid rgba(111, 78, 55, 0.12);
+        border: 1.5px solid rgba(111, 78, 55, 0.10);
         padding: 2.5rem 2.5rem 2rem 2.5rem;
         max-width: 430px;
         margin: auto;
@@ -46,13 +50,13 @@
         width: 90px;
         height: 90px;
         border-radius: 50%;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+        box-shadow: 0 2px 12px rgba(0,0,0,0.10);
         background: #fff;
         object-fit: cover;
         border: 3px solid #6f4e37;
     }
     .coffee-title {
-        color: #3e2723;
+        color: #6f4e37;
         font-weight: 800;
         text-align: center;
         font-size: 2rem;
@@ -60,56 +64,51 @@
         letter-spacing: 1px;
     }
     .coffee-tagline {
-        color: #6f4e37;
+        color: #a67c52;
         font-size: 1.1rem;
         text-align: center;
         margin-bottom: 2rem;
         font-weight: 500;
     }
     .form-label, .form-check-label {
-        color: #3e2723;
-        font-weight: 500;
+        color: #6f4e37;
     }
     .form-control, .form-select {
         background: rgba(255,255,255,0.95);
-        border: 1px solid #a67c52;
-        color: #3e2723;
+        border: 1px solid #c0a98e;
+        color: #6f4e37;
         border-radius: 10px;
         font-size: 1rem;
     }
     .form-control:focus, .form-select:focus {
         background: #fff;
-        color: #3e2723;
-        border-color: #6f4e37;
+        color: #6f4e37;
+        border-color: #a67c52;
         box-shadow: 0 0 0 2px #a67c5233;
     }
     .form-select option {
-        color: #3e2723;
+        color: #6f4e37;
         background: #fff;
     }
     .btn-primary {
-        background: linear-gradient(90deg, #6f4e37 0%, #a67c52 100%);
+        background: linear-gradient(90deg, #a67c52 0%, #e6ccb2 100%);
         border: none;
         font-weight: 700;
         font-size: 1.1rem;
         border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(111, 78, 55, 0.18);
+        box-shadow: 0 2px 8px rgba(111, 78, 55, 0.10);
         transition: background 0.2s;
         color: #fff;
     }
     .btn-primary:hover {
-        background: linear-gradient(90deg, #a67c52 0%, #6f4e37 100%);
-        color: #fff;
-    }
-    .btn-link, a {
+        background: linear-gradient(90deg, #e6ccb2 0%, #a67c52 100%);
         color: #6f4e37;
     }
-    .btn-link:hover, a:hover {
-        color: #3e2723;
-        text-decoration: underline;
+    .btn-link, a {
+        color: #a67c52;
     }
 </style>
-<div class="dark-overlay"></div>
+
 <div class="auth-wrapper">
     <div class="glass-card">
         <img src="/images/coffee.png" alt="Coffee SCMS Logo" class="coffee-logo">
@@ -119,24 +118,26 @@
             @csrf
             <div class="mb-4">
                 <label for="name" class="form-label">Full Name</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-transparent border-0"><i class="fas fa-user text-muted"></i></span>
-                    <input id="name" type="text" class="form-control @error('name') is-invalid @enderror" name="name" value="{{ old('name') }}" required autocomplete="name" autofocus placeholder="Enter your full name">
-                </div>
+                <input id="name" type="text" class="form-control @error('name') is-invalid @enderror" name="name" value="{{ old('name') }}" required autocomplete="name" autofocus>
+
                 @error('name')
-                    <span class="invalid-feedback d-block mt-1"><strong>{{ $message }}</strong></span>
+                    <span class="invalid-feedback" role="alert">
+                        <strong>{{ $message }}</strong>
+                    </span>
                 @enderror
             </div>
+
             <div class="mb-4">
                 <label for="email" class="form-label">Email Address</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-transparent border-0"><i class="fas fa-envelope text-muted"></i></span>
-                    <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" placeholder="Enter your email">
-                </div>
+                <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email">
+
                 @error('email')
-                    <span class="invalid-feedback d-block mt-1"><strong>{{ $message }}</strong></span>
+                    <span class="invalid-feedback" role="alert">
+                        <strong>{{ $message }}</strong>
+                    </span>
                 @enderror
             </div>
+
             <div class="mb-3">
                 <label for="role" class="form-label">Role</label>
                 <select id="role" class="form-select @error('role') is-invalid @enderror" name="role" required>
@@ -147,33 +148,37 @@
                     <option value="wholesaler">Wholesaler</option>
                     <option value="workforce_manager">Workforce Manager</option>
                 </select>
+
                 @error('role')
-                    <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                    <span class="invalid-feedback" role="alert">
+                        <strong>{{ $message }}</strong>
+                    </span>
                 @enderror
             </div>
+
             <div class="mb-4">
                 <label for="password" class="form-label">Password</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-transparent border-0"><i class="fas fa-lock text-muted"></i></span>
-                    <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="new-password" placeholder="Create a password">
-                </div>
+                <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="new-password">
+
                 @error('password')
-                    <span class="invalid-feedback d-block mt-1"><strong>{{ $message }}</strong></span>
+                    <span class="invalid-feedback" role="alert">
+                        <strong>{{ $message }}</strong>
+                    </span>
                 @enderror
             </div>
+
             <div class="mb-4">
                 <label for="password-confirm" class="form-label">Confirm Password</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-transparent border-0"><i class="fas fa-lock text-muted"></i></span>
-                    <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required autocomplete="new-password" placeholder="Confirm your password">
-                </div>
+                <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required autocomplete="new-password">
             </div>
-            <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-primary btn-lg">
+
+            <div class="mb-4">
+                <button type="submit" class="btn btn-primary w-100">
                     <i class="fas fa-user-plus me-2"></i> Create Account
                 </button>
             </div>
-            <div class="text-center mt-4">
+
+            <div class="text-center">
                 <p class="mb-0">Already have an account?
                     <a href="{{ route('login') }}" class="fw-bold">Login Here</a>
                 </p>

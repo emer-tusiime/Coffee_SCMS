@@ -13,8 +13,8 @@ class Authenticate extends Middleware
      */
     protected function redirectTo(Request $request): ?string
     {
-        // Force logout any existing session
-        if (Auth::check()) {
+        // Only invalidate session if we're explicitly logging out
+        if ($request->routeIs('logout')) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();

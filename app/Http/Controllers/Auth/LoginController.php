@@ -47,6 +47,9 @@ class LoginController extends Controller
      */
     public function login(Request $request)
     {
+        // Clear any existing session data
+        $request->session()->regenerate();
+
         $this->validateLogin($request);
 
         // Check if the user exists and is active
@@ -68,6 +71,8 @@ class LoginController extends Controller
         }
 
         if ($this->attemptLogin($request)) {
+            // Clear any previous session data
+            $request->session()->regenerate();
             return $this->sendLoginResponse($request);
         }
 
@@ -83,41 +88,61 @@ class LoginController extends Controller
      */
     protected function redirectTo()
     {
-        if (!auth()->check()) {
-            return route('login');
+        // Get the intended URL from session
+        $intendedUrl = session('url.intended');
+        
+        // If we have an intended URL and it's not the login page
+        if ($intendedUrl && $intendedUrl !== route('login')) {
+            return $intendedUrl;
         }
 
         $user = auth()->user();
-        switch ($user->role) {
-            case 'admin':
-                return route('admin.dashboard');
-            case 'factory':
-                return route('factory.dashboard');
-            case 'supplier':
-                return route('supplier.dashboard');
-            case 'customer':
-                return route('customer.dashboard');
-            case 'retailer':
-                return route('retailer.dashboard');
-            case 'wholesaler':
-                return route('wholesaler.dashboard');
-            case 'workforce_manager':
-                return route('workforce_manager.dashboard');
-            default:
-                return route('login');
+        
+        if (!$user) {
+            return route('login');
+        }
+
+        $dashboardRoute = $user->getDashboardRoute();
+        
+        try {
+            // Check if the route exists
+            route($dashboardRoute);
+            return route($dashboardRoute);
+        } catch (\Exception $e) {
+            return route('home');
         }
     }
 
-    /**
-     * Handle successful authentication.
+    /*
+     // Handle successful authentication.
      */
     protected function authenticated(Request $request, $user)
     {
+        // Log successful authentication
         Log::info('Authentication successful', [
             'user_id' => $user->id,
             'email' => $user->email,
             'role' => $user->role
         ]);
+
+        // Get the intended URL from session
+        $intendedUrl = $request->session()->get('url.intended');
+        
+        // If we have an intended URL and it's not the login page
+        if ($intendedUrl && $intendedUrl !== route('login')) {
+            return redirect($intendedUrl);
+        }
+
+        // Get the user's dashboard route
+        $dashboardRoute = $user->getDashboardRoute();
+        
+        try {
+            // Check if the route exists
+            route($dashboardRoute);
+            return redirect()->route($dashboardRoute);
+        } catch (\Exception $e) {
+            return redirect()->route('home');
+        }
     }
 
     /**
@@ -136,12 +161,18 @@ class LoginController extends Controller
      */
     public function logout(Request $request)
     {
+        // Clear any existing session data
+        $request->session()->flush();
+        
         Log::info('User logged out', ['user_id' => auth()->id()]);
 
         $this->guard()->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        // Clear any intended URL
+        $request->session()->forget('url.intended');
+
+        return redirect()->route('login')->with('status', 'You have been logged out.');
     }
 }

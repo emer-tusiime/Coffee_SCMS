@@ -48,6 +48,14 @@ return [
             ],
         ],
 
+        'redis' => [
+            'driver' => 'redis',
+            'connection' => 'default',
+            'client' => env('REDIS_CLIENT', 'phpredis'),
+            'queue' => env('REDIS_QUEUE', 'default'),
+            'retry_after' => 7200,
+        ],
+
         'ably' => [
             'driver' => 'ably',
             'key' => env('ABLY_KEY'),

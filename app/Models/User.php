@@ -91,7 +91,9 @@ class User extends Authenticatable
      */
     public function getDashboardRoute(): string
     {
-        return match(strtolower($this->role)) {
+        $role = strtolower($this->role);
+        
+        return match($role) {
             'admin' => 'admin.dashboard',
             'factory' => 'factory.dashboard',
             'supplier' => 'supplier.dashboard',
@@ -99,7 +101,7 @@ class User extends Authenticatable
             'retailer' => 'retailer.dashboard',
             'wholesaler' => 'wholesaler.dashboard',
             'workforce_manager' => 'workforce_manager.dashboard',
-            default => 'login'
+            default => 'home'
         };
     }
 

@@ -6,6 +6,8 @@ use Illuminate\Database\Seeder;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
+// AdminUserSeeder is now disabled. Use AdminSeeder for admin account creation.
+
 class AdminUserSeeder extends Seeder
 {
     /**
@@ -13,12 +15,12 @@ class AdminUserSeeder extends Seeder
      */
     public function run(): void
     {
-        User::create([
-            'name' => 'Admin User',
-            'email' => 'admin@coffee-scms.com',
-            'password' => Hash::make('password'),
-            'role' => 'admin',
-            'status' => 'active'
-        ]);
+        // User::create([
+        //     'name' => 'Admin User',
+        //     'email' => 'admin@coffee-scms.com',
+        //     'password' => Hash::make('password'),
+        //     'role' => 'admin',
+        //     'status' => 'active'
+        // ]);
     }
 }

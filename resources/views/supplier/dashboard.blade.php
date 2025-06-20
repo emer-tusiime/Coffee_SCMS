@@ -12,7 +12,7 @@
                             <i class="fas fa-home me-2"></i> Overview
                         </a>
                     </li>
-                    <li class="nav-item">
+                    {{-- <li class="nav-item">
                         <a class="nav-link" href="{{ route('supplier.products.index') }}">
                             <i class="fas fa-box me-2"></i> Products
                         </a>
@@ -26,18 +26,7 @@
                         <a class="nav-link" href="{{ route('supplier.orders.index') }}">
                             <i class="fas fa-shopping-cart me-2"></i> Orders
                         </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('supplier.chat.index') }}">
-                            <i class="fas fa-comments me-2"></i> Chat
-                            <span class="badge bg-primary rounded-pill" id="unread-messages">0</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('supplier.analytics') }}">
-                            <i class="fas fa-chart-line me-2"></i> Analytics
-                        </a>
-                    </li>
+                    </li> --}}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('supplier.application.status') }}">
                             <i class="fas fa-file-alt me-2"></i> Vendor Application
@@ -51,18 +40,30 @@
         <main class="col-md-10 ms-sm-auto px-md-4">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2">Supplier Dashboard</h1>
-                <div class="btn-toolbar mb-2 mb-md-0">
-                    <div class="btn-group me-2">
-                        <button type="button" class="btn btn-sm btn-outline-secondary" id="export-report">Export Report</button>
+            </div>
+            <div class="alert alert-info mb-4">
+                Welcome, {{ Auth::user()->name }}! This is your supplier dashboard. Use the Vendor Application link to manage your application or contact support for help.
+            </div>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="card text-dark bg-light">
+                        <div class="card-body">
+                            <h5 class="card-title">Vendor Application Status</h5>
+                            <p class="card-text">Check the status of your vendor application or submit a new one.</p>
+                            <a href="{{ route('supplier.application.status') }}" class="btn btn-primary">View Application</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card text-dark bg-light">
+                        <div class="card-body">
+                            <h5 class="card-title">Need Help?</h5>
+                            <p class="card-text">Contact support for assistance with your supplier account.</p>
+                            <a href="mailto:support@coffee-scms.com" class="btn btn-outline-secondary">Contact Support</a>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            @if (session('status'))
-                <div class="alert alert-success" role="alert">
-                    {{ session('status') }}
-                </div>
-            @endif
 
             <!-- Overview Cards -->
             <div class="row g-3 mb-4">

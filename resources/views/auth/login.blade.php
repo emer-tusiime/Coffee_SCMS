@@ -3,7 +3,7 @@
 @section('content')
 <style>
     body {
-        background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80') no-repeat center center fixed;
+        background: url('/images/coffeeBG.jpg') no-repeat center center fixed;
         background-size: cover;
         min-height: 100vh;
         position: relative;
@@ -11,7 +11,7 @@
     .dark-overlay {
         position: fixed;
         top: 0; left: 0; width: 100vw; height: 100vh;
-        background: rgba(30, 20, 10, 0.7);
+        background: rgba(255, 255, 255, 0.25);
         z-index: 0;
     }
     .auth-wrapper {
@@ -23,12 +23,12 @@
         z-index: 1;
     }
     .glass-card {
-        background: rgba(34, 34, 34, 0.65);
+        background: rgba(255, 255, 255, 0.85);
         border-radius: 24px;
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1.5px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.10);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1.5px solid rgba(111, 78, 55, 0.10);
         padding: 2.5rem 2.5rem 2rem 2.5rem;
         max-width: 400px;
         margin: auto;
@@ -46,13 +46,13 @@
         width: 90px;
         height: 90px;
         border-radius: 50%;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+        box-shadow: 0 2px 12px rgba(0,0,0,0.10);
         background: #fff;
         object-fit: cover;
         border: 3px solid #6f4e37;
     }
     .coffee-title {
-        color: #fff;
+        color: #6f4e37;
         font-weight: 800;
         text-align: center;
         font-size: 2rem;
@@ -60,44 +60,46 @@
         letter-spacing: 1px;
     }
     .coffee-tagline {
-        color: #c0a98e;
+        color: #a67c52;
         font-size: 1.1rem;
         text-align: center;
         margin-bottom: 2rem;
         font-weight: 500;
     }
     .form-label, .form-check-label {
-        color: #e0d6ce;
+        color: #6f4e37;
     }
     .form-control {
-        background: rgba(255,255,255,0.08);
-        border: 1px solid #6f4e37;
-        color: #fff;
+        background: rgba(255,255,255,0.95);
+        border: 1px solid #c0a98e;
+        color: #6f4e37;
         border-radius: 10px;
     }
     .form-control:focus {
-        background: rgba(255,255,255,0.15);
-        color: #fff;
-        border-color: #c0a98e;
-        box-shadow: 0 0 0 2px #6f4e3733;
+        background: #fff;
+        color: #6f4e37;
+        border-color: #a67c52;
+        box-shadow: 0 0 0 2px #a67c5233;
     }
     .btn-primary {
-        background: linear-gradient(90deg, #6f4e37 0%, #a67c52 100%);
+        background: linear-gradient(90deg, #a67c52 0%, #e6ccb2 100%);
         border: none;
         font-weight: 700;
         font-size: 1.1rem;
         border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(111, 78, 55, 0.18);
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(111, 78, 55, 0.10);
         transition: background 0.2s;
     }
     .btn-primary:hover {
-        background: linear-gradient(90deg, #a67c52 0%, #6f4e37 100%);
+        background: linear-gradient(90deg, #e6ccb2 0%, #a67c52 100%);
+        color: #6f4e37;
     }
     .btn-link, a {
-        color: #c0a98e;
+        color: #a67c52;
     }
     .btn-link:hover, a:hover {
-        color: #fff;
+        color: #6f4e37;
         text-decoration: underline;
     }
 </style>

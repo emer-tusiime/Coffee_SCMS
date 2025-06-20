@@ -61,6 +61,30 @@ class DashboardController extends Controller
         ));
     }
 
+    public function productionLines()
+    {
+        $productionLines = ProductionLine::with(['qualityIssues', 'maintenanceTasks'])->get();
+        return view('factory.production-lines', compact('productionLines'));
+    }
+
+    public function qualityControl()
+    {
+        $qualityIssues = QualityIssue::with('productionLine')->latest()->paginate(10);
+        return view('factory.quality-control', compact('qualityIssues'));
+    }
+
+    public function maintenance()
+    {
+        $maintenanceTasks = MaintenanceTask::with('productionLine')->orderBy('due_date')->paginate(10);
+        return view('factory.maintenance', compact('maintenanceTasks'));
+    }
+
+    public function workforce()
+    {
+        $workforceData = $this->getWorkforceStatus();
+        return view('factory.workforce', compact('workforceData'));
+    }
+
     private function getWorkforceStatus()
     {
         // Placeholder for workforce management logic
