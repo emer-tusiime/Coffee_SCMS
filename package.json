@@ -14,5 +14,9 @@
         "laravel-vite-plugin": "^1.0.0",
         "sass": "^1.63.6",
         "vite": "^5.0.0"
+    },
+    "dependencies": {
+        "laravel-echo": "^2.1.6",
+        "pusher-js": "^8.4.0"
     }
 }
