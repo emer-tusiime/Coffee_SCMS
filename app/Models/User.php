@@ -7,6 +7,10 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Hash;
+use App\Models\Order;
+use App\Models\Product;
 
 class User extends Authenticatable
 {
@@ -23,11 +27,13 @@ class User extends Authenticatable
         'password',
         'role',
         'contact_info',
-        'status'
+        'status',
+        'approved',
+        'approval_message'
     ];
 
     /**
-     * The attributes that should be hidden for arrays.
+     * The attributes that should be hidden for serialization.
      *
      * @var array<int, string>
      */
@@ -44,14 +50,215 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'approved' => 'boolean'
     ];
 
     /**
-     * Get the orders for the customer.
+     * Available user roles
      */
-    public function customerOrders(): HasMany
+    public const ROLE_ADMIN = 'admin';
+    public const ROLE_SUPPLIER = 'supplier';
+    public const ROLE_FACTORY = 'factory';
+    public const ROLE_WHOLESALER = 'wholesaler';
+    public const ROLE_RETAILER = 'retailer';
+
+    /**
+     * Available user statuses
+     */
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_SUSPENDED = 'suspended';
+    public const STATUS_REJECTED = 'rejected';
+
+    /**
+     * Get available roles with their display names
+     */
+    public static function getRoles(): array
     {
-        return $this->hasMany(Order::class, 'customer_id');
+        return [
+            self::ROLE_SUPPLIER => 'Supplier',
+            self::ROLE_FACTORY => 'Factory Manager',
+            self::ROLE_WHOLESALER => 'Wholesaler',
+            self::ROLE_RETAILER => 'Retailer'
+        ];
+    }
+
+    /**
+     * Get available statuses with their display names
+     */
+    public static function getStatuses(): array
+    {
+        return [
+            self::STATUS_PENDING => 'Pending Approval',
+            self::STATUS_ACTIVE => 'Active',
+            self::STATUS_SUSPENDED => 'Suspended',
+            self::STATUS_REJECTED => 'Rejected'
+        ];
+    }
+
+    /**
+     * Create a new user with pending status
+     */
+    public static function createPending(array $data)
+    {
+        return self::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+            'role' => $data['role'],
+            'contact_info' => $data['contact_info'] ?? null,
+            'status' => self::STATUS_PENDING,
+            'approved' => false,
+            'approval_message' => 'Account pending approval'
+        ]);
+    }
+
+    /**
+     * Approve a user's account
+     */
+    public function approve(string $message = 'Account approved by admin')
+    {
+        $this->update([
+            'status' => self::STATUS_ACTIVE,
+            'approved' => true,
+            'approval_message' => $message
+        ]);
+    }
+
+    /**
+     * Reject a user's account
+     */
+    public function reject(string $message = 'Account rejected by admin')
+    {
+        $this->update([
+            'status' => self::STATUS_REJECTED,
+            'approved' => false,
+            'approval_message' => $message
+        ]);
+    }
+
+    /**
+     * Suspend a user's account
+     */
+    public function suspend(string $message = 'Account suspended')
+    {
+        $this->update([
+            'status' => self::STATUS_SUSPENDED,
+            'approval_message' => $message
+        ]);
+    }
+
+    /**
+     * Check if user has a specific role
+     */
+    public function hasRole(string $role): bool
+    {
+        return strtolower($this->role) === strtolower($role);
+    }
+
+    /**
+     * Check if user is an admin
+     */
+    public function isAdmin(): bool
+    {
+        return $this->hasRole(self::ROLE_ADMIN);
+    }
+
+    /**
+     * Check if user is approved
+     */
+    public function isApproved(): bool
+    {
+        return $this->approved === true;
+    }
+
+    /**
+     * Check if user is active
+     */
+    public function isActive(): bool
+    {
+        return $this->status === self::STATUS_ACTIVE;
+    }
+
+    /**
+     * Check if user is pending approval
+     */
+    public function isPending(): bool
+    {
+        return $this->status === self::STATUS_PENDING;
+    }
+
+    /**
+     * Check if user is suspended
+     */
+    public function isSuspended(): bool
+    {
+        return $this->status === self::STATUS_SUSPENDED;
+    }
+
+    /**
+     * Check if user is rejected
+     */
+    public function isRejected(): bool
+    {
+        return $this->status === self::STATUS_REJECTED;
+    }
+
+    /**
+     * Get the dashboard route for the user based on their role
+     */
+    public function getDashboardRoute(): string
+    {
+        $role = strtolower($this->role);
+        
+        return match($role) {
+            self::ROLE_ADMIN => 'admin.dashboard',
+            self::ROLE_FACTORY => 'factory.dashboard',
+            self::ROLE_SUPPLIER => 'supplier.dashboard',
+            self::ROLE_WHOLESALER => 'wholesaler.dashboard',
+            self::ROLE_RETAILER => 'retailer.dashboard',
+            default => 'home'
+        };
+    }
+
+    /**
+     * Scope a query to only include active users
+     */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('status', self::STATUS_ACTIVE);
+    }
+
+    /**
+     * Scope a query to only include pending users
+     */
+    public function scopePending(Builder $query): Builder
+    {
+        return $query->where('status', self::STATUS_PENDING);
+    }
+
+    /**
+     * Scope a query to only include approved users
+     */
+    public function scopeApproved(Builder $query): Builder
+    {
+        return $query->where('approved', true);
+    }
+
+    /**
+     * Scope a query to only include rejected users
+     */
+    public function scopeRejected(Builder $query): Builder
+    {
+        return $query->where('status', self::STATUS_REJECTED);
+    }
+
+    /**
+     * Scope a query to filter by role
+     */
+    public function scopeRole(Builder $query, string $role): Builder
+    {
+        return $query->where('role', $role);
     }
 
     /**
@@ -63,61 +270,57 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user has a specific role
+     * Get the factory associated with the user.
      */
-    public function hasRole($role): bool
+    public function factory()
     {
-        return strtolower($this->role) === strtolower($role);
+        return $this->hasOne(Factory::class);
     }
 
     /**
-     * Get available roles with their display names
+     * Get the products for the supplier user.
      */
-    public static function getRoles(): array
+    public function products()
     {
-        return [
-            'admin' => 'Administrator',
-            'factory' => 'Factory Manager',
-            'supplier' => 'Supplier',
-            'customer' => 'Customer',
-            'retailer' => 'Retailer',
-            'wholesaler' => 'Wholesaler',
-            'workforce_manager' => 'Workforce Manager'
-        ];
+        return $this->hasMany(Product::class, 'supplier_id');
     }
 
     /**
-     * Get the dashboard route for the user based on their role
+     * Get the orders for the wholesaler.
      */
-    public function getDashboardRoute(): string
+    public function wholesalerOrders(): HasMany
     {
-        $role = strtolower($this->role);
-        
-        return match($role) {
-            'admin' => 'admin.dashboard',
-            'factory' => 'factory.dashboard',
-            'supplier' => 'supplier.dashboard',
-            'customer' => 'customer.dashboard',
-            'retailer' => 'retailer.dashboard',
-            'wholesaler' => 'wholesaler.dashboard',
-            'workforce_manager' => 'workforce_manager.dashboard',
-            default => 'home'
-        };
+        return $this->hasMany(Order::class, 'wholesaler_id');
     }
 
     /**
-     * Check if the user is active
+     * Get the factories this wholesaler has ordered from (via orders).
      */
-    public function isActive()
+    public function orderedFactories()
     {
-        return $this->status === 'active';
+        return $this->hasManyThrough(
+            \App\Models\Factory::class,
+            \App\Models\Order::class,
+            'wholesaler_id', // Foreign key on orders table...
+            'id',            // Foreign key on factories table...
+            'id',            // Local key on users table...
+            'factory_id'     // Local key on orders table...
+        )->distinct();
     }
 
     /**
-     * Scope a query to only include active users
+     * The retailers that belong to the wholesaler.
      */
-    public function scopeActive($query)
+    public function retailers()
     {
-        return $query->where('status', 'active');
+        return $this->belongsToMany(User::class, 'retailer_wholesaler', 'wholesaler_id', 'retailer_id');
+    }
+
+    /**
+     * The wholesalers that belong to the retailer.
+     */
+    public function wholesalers()
+    {
+        return $this->belongsToMany(User::class, 'retailer_wholesaler', 'retailer_id', 'wholesaler_id');
     }
 }

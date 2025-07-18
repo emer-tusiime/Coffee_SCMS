@@ -104,6 +104,48 @@ class UserController extends Controller
     }
 
     /**
+     * Approve a user account
+     */
+    public function approve(User $user)
+    {
+        $user->approve();
+        
+        return redirect()->back()
+            ->with('success', 'User account approved successfully.');
+    }
+
+    /**
+     * Reject a user account
+     */
+    public function reject(User $user)
+    {
+        $user->reject();
+        
+        return redirect()->back()
+            ->with('success', 'User account rejected successfully.');
+    }
+
+    /**
+     * View user dashboard (read-only)
+     */
+    public function viewDashboard(User $user)
+    {
+        // Only allow viewing dashboards for non-admin users
+        if ($user->isAdmin()) {
+            return redirect()->back()
+                ->with('error', 'Cannot view admin dashboard.');
+        }
+
+        // Check if user is approved and active
+        if (!$user->isApproved() || !$user->isActive()) {
+            return redirect()->back()
+                ->with('error', 'Cannot view dashboard for inactive or unapproved user.');
+        }
+
+        return view('admin.users.dashboard-view', compact('user'));
+    }
+
+    /**
      * Remove the specified user from storage.
      */
     public function destroy(User $user)

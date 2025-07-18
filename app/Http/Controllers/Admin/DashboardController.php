@@ -9,6 +9,8 @@ use App\Models\QualityIssue;
 use App\Models\ProductionLine;
 use App\Models\Supplier;
 use App\Models\InventoryAlert;
+use App\Models\CoffeeSale;
+use App\Services\MachineLearning\MachineLearningService;
 use App\Services\MachineLearning\DemandPredictionService;
 use App\Services\MachineLearning\QualityPredictionService;
 use App\Services\Analytics\ProductionAnalyticsService;
@@ -16,21 +18,25 @@ use App\Services\Analytics\SupplierAnalyticsService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
+    protected $machineLearningService;
     protected $demandPredictionService;
     protected $qualityPredictionService;
     protected $productionAnalyticsService;
     protected $supplierAnalyticsService;
 
     public function __construct(
+        MachineLearningService $machineLearningService,
         DemandPredictionService $demandPredictionService,
         QualityPredictionService $qualityPredictionService,
         ProductionAnalyticsService $productionAnalyticsService,
         SupplierAnalyticsService $supplierAnalyticsService
     ) {
         $this->middleware(['auth', 'role:admin']);
+        $this->machineLearningService = $machineLearningService;
         $this->demandPredictionService = $demandPredictionService;
         $this->qualityPredictionService = $qualityPredictionService;
         $this->productionAnalyticsService = $productionAnalyticsService;
@@ -39,63 +45,38 @@ class DashboardController extends Controller
 
     public function index()
     {
-        // Get total orders count
-        $totalOrders = Order::count();
+        $totalOrders = \App\Models\Order::count();
+        $productionEfficiency = \App\Models\ProductionLine::avg('efficiency') ?? 0;
+        $inventoryAlertsCount = \App\Models\Product::where('stock', '<', 10)->count();
+        $totalQualityIssues = \App\Models\QualityIssue::count();
+        $totalCoffeeSales = \App\Models\Product::where('type', 'raw')->sum('stock');
+        $totalCoffeeValue = \App\Models\Order::sum('total_amount');
+        $pendingCoffeeSales = \App\Models\Order::where('status', 'pending')->count();
 
-        // Calculate production efficiency (example calculation)
-        $productionEfficiency = ProductionLine::avg('efficiency') ?? 0;
-        $productionEfficiency = round($productionEfficiency);
-
-        // Get inventory alerts count (products with low stock)
-        $inventoryAlerts = Product::where('stock', '<', 10)->count();
-
-        // Get quality issues count
-        $qualityIssues = QualityIssue::where('status', 'open')->count();
-
-        // Get production line data for chart
-        $productionLines = ProductionLine::select('name', 'efficiency', 'status')
-            ->get()
-            ->map(function ($line) {
-                return [
-                    'name' => $line->name,
-                    'efficiency' => $line->efficiency,
-                    'status' => $line->status
-                ];
-            });
-
-        // ML Insights - Demand Prediction
-        $demandPrediction = $this->getDemandPredictionData();
-
-        // Recent Quality Issues
-        $recentQualityIssues = QualityIssue::with('productionLine')
-            ->latest()
+        $recentInventoryAlerts = \App\Models\Product::where('stock', '<', 10)->orderBy('updated_at', 'desc')->take(5)->get();
+        $recentQualityIssues = \App\Models\QualityIssue::orderBy('created_at', 'desc')->take(5)->get();
+        $topSellingProducts = \App\Models\OrderItem::select('product_id', \DB::raw('SUM(quantity) as total_quantity'))
+            ->groupBy('product_id')
+            ->orderByDesc('total_quantity')
+            ->with('product')
             ->take(5)
-            ->get()
-            ->map(function ($issue) {
-                $issue->status_color = $this->getStatusColor($issue->status);
-                return $issue;
-            });
+            ->get();
 
-        // Supplier Performance
-        $supplierPerformance = $this->getSupplierPerformanceData();
-
-        // Get user statistics
-        $totalUsers = User::count();
-        $customerCount = User::where('role', 'customer')->count();
-        $supplierCount = User::where('role', 'supplier')->count();
+        // Best-practice: Get top 5 suppliers by performance using SupplierAnalyticsService
+        $topSuppliers = $this->supplierAnalyticsService->getTopSuppliers(5)->map(function ($supplier) {
+            // For chart/table compatibility, add expected fields
+            return (object) [
+                'supplier_name' => $supplier->name,
+                'on_time_delivery_rate' => $supplier->delivery_rate ?? 0,
+                'quality_score' => $supplier->quality_score ?? 0,
+                'total_value' => $supplier->total_value ?? 0, // Optional: if you want to show value
+            ];
+        });
 
         return view('admin.dashboard', compact(
-            'totalOrders',
-            'productionEfficiency',
-            'inventoryAlerts',
-            'qualityIssues',
-            'productionLines',
-            'demandPrediction',
-            'recentQualityIssues',
-            'supplierPerformance',
-            'totalUsers',
-            'customerCount',
-            'supplierCount'
+            'totalOrders', 'productionEfficiency', 'inventoryAlertsCount', 'totalQualityIssues',
+            'totalCoffeeSales', 'totalCoffeeValue', 'pendingCoffeeSales',
+            'recentInventoryAlerts', 'recentQualityIssues', 'topSellingProducts', 'topSuppliers'
         ));
     }
 
@@ -115,11 +96,51 @@ class DashboardController extends Controller
         return $data;
     }
 
+    /**
+     * Show sales analytics
+     */
+    public function salesAnalytics(Request $request)
+    {
+        // Top supplier by demand
+        $topSupplier = \App\Models\OrderItem::select('product_id', \DB::raw('SUM(quantity) as total_quantity'))
+            ->whereHas('order', function($q) { $q->where('order_type', 'supplier'); })
+            ->with('product.supplier')
+            ->groupBy('product_id')
+            ->orderByDesc('total_quantity')
+            ->first();
+
+        // Top factory by demand
+        $topFactory = \App\Models\OrderItem::select('product_id', \DB::raw('SUM(quantity) as total_quantity'))
+            ->whereHas('order', function($q) { $q->where('order_type', 'wholesaler'); })
+            ->with('product.factory')
+            ->groupBy('product_id')
+            ->orderByDesc('total_quantity')
+            ->first();
+
+        // Top wholesaler by demand
+        $topWholesaler = \App\Models\OrderItem::select('product_id', \DB::raw('SUM(quantity) as total_quantity'))
+            ->whereHas('order', function($q) { $q->where('order_type', 'retailer'); })
+            ->with('order.wholesaler')
+            ->groupBy('product_id')
+            ->orderByDesc('total_quantity')
+            ->first();
+
+        // Prepare data for charting
+        $labels = ['Supplier', 'Factory', 'Wholesaler'];
+        $data = [
+            $topSupplier ? $topSupplier->total_quantity : 0,
+            $topFactory ? $topFactory->total_quantity : 0,
+            $topWholesaler ? $topWholesaler->total_quantity : 0,
+        ];
+
+        return view('admin.sales-analytics', compact('labels', 'data', 'topSupplier', 'topFactory', 'topWholesaler'));
+    }
+
     private function getDemandPredictionData()
     {
-        $dates = collect();
-        $actual = collect();
-        $predicted = collect();
+        $dates = collect([]);
+        $actual = collect([]);
+        $predicted = collect([]);
 
         // Get data for the next 7 days
         for ($i = 0; $i < 7; $i++) {
@@ -138,10 +159,20 @@ class DashboardController extends Controller
         }
 
         return [
-            'labels' => $dates->toArray(),
+            'dates' => $dates->toArray(),
             'actual' => $actual->toArray(),
-            'predicted' => $predicted->toArray(),
+            'predicted' => $predicted->toArray()
         ];
+    }
+
+    private function getStatusColor($status)
+    {
+        return [
+            'open' => 'danger',
+            'in_progress' => 'warning',
+            'resolved' => 'success',
+            'closed' => 'secondary',
+        ][$status] ?? 'secondary';
     }
 
     private function getSupplierPerformanceData()
@@ -159,16 +190,6 @@ class DashboardController extends Controller
 
                 return $supplier;
             });
-    }
-
-    private function getStatusColor($status)
-    {
-        return [
-            'open' => 'danger',
-            'in_progress' => 'warning',
-            'resolved' => 'success',
-            'closed' => 'secondary',
-        ][$status] ?? 'secondary';
     }
 
     private function getSupplierStatusColor($status)
@@ -258,5 +279,94 @@ class DashboardController extends Controller
 
         $str = substr($str, 0, -1);
         file_put_contents($envFile, $str);
+    }
+
+    public function mlInsights()
+    {
+        // Top selling products by supplier
+        $topSupplierProducts = \App\Models\OrderItem::select('product_id', \DB::raw('SUM(quantity) as total_quantity'))
+            ->whereHas('order', function($q) { $q->where('order_type', 'supplier'); })
+            ->groupBy('product_id')
+            ->orderByDesc('total_quantity')
+            ->with('product')
+            ->take(5)
+            ->get();
+
+        // Top selling products by factory
+        $topFactoryProducts = \App\Models\OrderItem::select('product_id', \DB::raw('SUM(quantity) as total_quantity'))
+            ->whereHas('order', function($q) { $q->where('order_type', 'wholesaler'); })
+            ->groupBy('product_id')
+            ->orderByDesc('total_quantity')
+            ->with('product')
+            ->take(5)
+            ->get();
+
+        // Top selling products by wholesaler
+        $topWholesalerProducts = \App\Models\OrderItem::select('product_id', \DB::raw('SUM(quantity) as total_quantity'))
+            ->whereHas('order', function($q) { $q->where('order_type', 'retailer'); })
+            ->groupBy('product_id')
+            ->orderByDesc('total_quantity')
+            ->with('product')
+            ->take(5)
+            ->get();
+
+        // Example: Predict future demand for the top product at each level (replace with real ML call)
+        $futureSupplierPrediction = $topSupplierProducts->first() ? [
+            'dates' => ['2025-07-16','2025-07-17','2025-07-18','2025-07-19','2025-07-20'],
+            'predicted' => [120, 130, 140, 150, 160]
+        ] : [];
+        $futureFactoryPrediction = $topFactoryProducts->first() ? [
+            'dates' => ['2025-07-16','2025-07-17','2025-07-18','2025-07-19','2025-07-20'],
+            'predicted' => [80, 90, 100, 110, 120]
+        ] : [];
+        $futureWholesalerPrediction = $topWholesalerProducts->first() ? [
+            'dates' => ['2025-07-16','2025-07-17','2025-07-18','2025-07-19','2025-07-20'],
+            'predicted' => [60, 70, 80, 90, 100]
+        ] : [];
+
+        return view('admin.ml-insights', [
+            'topSupplierProducts' => $topSupplierProducts,
+            'topFactoryProducts' => $topFactoryProducts,
+            'topWholesalerProducts' => $topWholesalerProducts,
+            'futureSupplierPrediction' => $futureSupplierPrediction,
+            'futureFactoryPrediction' => $futureFactoryPrediction,
+            'futureWholesalerPrediction' => $futureWholesalerPrediction,
+            'topSupplierProduct' => $topSupplierProducts->first(),
+            'topFactoryProduct' => $topFactoryProducts->first(),
+            'topWholesalerProduct' => $topWholesalerProducts->first(),
+        ]);
+    }
+
+    public function rawMaterials(Request $request)
+    {
+        $suppliers = \App\Models\User::where('role', 'supplier')->get();
+        $selectedSupplierId = $request->input('supplier_id');
+
+        $query = \App\Models\Product::where('type', 'raw')->with('supplier');
+        if ($selectedSupplierId) {
+            $query->where('supplier_id', $selectedSupplierId);
+        }
+        $rawProducts = $query->get();
+
+        $totalProducts = $rawProducts->count();
+        $totalStock = $rawProducts->sum('stock');
+        $totalStockValue = $rawProducts->sum(function($product) {
+            return $product->stock * $product->price;
+        });
+
+        $selectedSupplier = $suppliers->where('id', $selectedSupplierId)->first();
+
+        return view('admin.inventory.raw-materials', compact(
+            'rawProducts', 'suppliers', 'selectedSupplierId', 'totalProducts', 'totalStock', 'totalStockValue', 'selectedSupplier'
+        ));
+    }
+
+    public function finishedGoods()
+    {
+        $finishedGoods = \App\Models\Product::where('type', 'raw')
+            ->where('stock', '<=', 0)
+            ->with('supplier')
+            ->get();
+        return view('admin.inventory.finished-goods', compact('finishedGoods'));
     }
 }

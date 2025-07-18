@@ -3,9 +3,9 @@
 @section('content')
 <style>
     body {
+        min-height: 100vh;
         background: url('/images/coffeeBG.jpg') no-repeat center center fixed;
         background-size: cover;
-        min-height: 100vh;
         position: relative;
     }
     .dark-overlay {
@@ -17,7 +17,7 @@
     .auth-wrapper {
         min-height: 100vh;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: center;
         position: relative;
         z-index: 1;
@@ -31,7 +31,7 @@
         border: 1.5px solid rgba(111, 78, 55, 0.10);
         padding: 2.5rem 2.5rem 2rem 2.5rem;
         max-width: 400px;
-        margin: auto;
+        margin: 2.5rem auto 0 auto;
         position: relative;
         z-index: 2;
         animation: fadeInUp 1s cubic-bezier(.39,.575,.565,1) both;
@@ -106,16 +106,21 @@
 <div class="dark-overlay"></div>
 <div class="auth-wrapper">
     <div class="glass-card">
-        <img src="/images/coffee.png" alt="Coffee SCMS Logo" class="coffee-logo">
         <div class="coffee-title">Welcome to Coffee SCMS</div>
         <div class="coffee-tagline">From Bean to Cup, Managed with Care</div>
+        @if(session('info'))
+            <div class="alert alert-info mt-3">
+                {{ session('info') }}
+            </div>
+        @endif
         <form method="POST" action="{{ route('login') }}" class="needs-validation" novalidate>
             @csrf
+            <input type="hidden" name="_token" value="{{ csrf_token() }}">
             <div class="mb-3">
                 <label for="email" class="form-label">Email Address</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="fas fa-envelope"></i></span>
-                    <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus>
+                    <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus placeholder="ccc@gmail.com">
                 </div>
                 @error('email')
                     <span class="invalid-feedback" role="alert">
@@ -127,7 +132,7 @@
                 <label for="password" class="form-label">Password</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                    <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="current-password">
+                    <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="current-password" placeholder="Enter password">
                 </div>
                 @error('password')
                     <span class="invalid-feedback" role="alert">

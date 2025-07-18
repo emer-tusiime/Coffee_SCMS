@@ -27,18 +27,21 @@
                                     <th>Description</th>
                                     <th>Price</th>
                                     <th>Stock</th>
-                                    <th>Category</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($products as $product)
-                                    <tr>
+                                    <tr @if($product->stock <= $product->threshold) style="background-color: #fff3cd;" @endif>
                                         <td>{{ $product->name }}</td>
                                         <td>{{ Str::limit($product->description, 50) }}</td>
                                         <td>{{ number_format($product->price, 2) }}</td>
-                                        <td>{{ $product->stock }}</td>
-                                        <td>{{ $product->category->name }}</td>
+                                        <td>
+                                            {{ $product->stock }}
+                                            @if($product->stock <= $product->threshold)
+                                                <span class="badge bg-warning text-dark">Low Stock!</span>
+                                            @endif
+                                        </td>
                                         <td>
                                             <a href="{{ route('supplier.products.edit', $product) }}" class="btn btn-sm btn-primary">Edit</a>
                                             <form action="{{ route('supplier.products.destroy', $product) }}" method="POST" class="d-inline">
@@ -53,6 +56,18 @@
                         </table>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col-md-6">
+            <div class="alert alert-info">
+                <strong>Total Products:</strong> {{ $products->count() }}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="alert alert-success">
+                <strong>Total Stock Value:</strong> UGX {{ number_format($products->sum(function($product) { return $product->stock * $product->price; }), 0) }}
             </div>
         </div>
     </div>

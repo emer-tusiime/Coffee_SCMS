@@ -46,6 +46,12 @@ return [
         'api_key' => env('ML_PREDICTION_API_KEY'),
     ],
 
+    'ml' => [
+        'endpoint' => env('ML_ENDPOINT', 'https://ml.example.com/api'),
+        'api_key' => env('ML_API_KEY', ''),
+        'enabled' => env('ML_ENABLED', true),
+    ],
+
     'ml_segmentation_api' => [
         'endpoint' => env('ML_SEGMENTATION_API_ENDPOINT', 'https://ml.example.com/segment'),
         'api_key' => env('ML_SEGMENTATION_API_KEY'),

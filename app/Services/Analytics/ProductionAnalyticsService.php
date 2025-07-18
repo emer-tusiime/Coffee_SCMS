@@ -4,6 +4,7 @@ namespace App\Services\Analytics;
 
 use App\Models\ProductionLine;
 use App\Models\ProductionBatch;
+use App\Models\InventoryAlert;
 use Carbon\Carbon;
 
 class ProductionAnalyticsService
@@ -48,10 +49,47 @@ class ProductionAnalyticsService
         $targetOutput = $batches->sum('target_quantity');
 
         if ($targetOutput === 0) {
-            return 0;
+            return null;
         }
 
-        return round(($actualOutput / $targetOutput) * 100, 2);
+        return ($actualOutput / $targetOutput) * 100;
+    }
+
+    public function getInventoryAlertsCount()
+    {
+        return \App\Models\InventoryAlert::where('is_active', true)
+            ->count();
+    }
+
+    public function getInventoryAlerts()
+    {
+        return \App\Models\InventoryAlert::with(['product'])
+            ->where('is_active', true)
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+    }
+
+    public function calculateEfficiency()
+    {
+        $productionLines = ProductionLine::all();
+        $totalEfficiency = 0;
+        $count = 0;
+
+        foreach ($productionLines as $line) {
+            $efficiency = $this->calculateLineEfficiency($line);
+            if ($efficiency !== null) {
+                $totalEfficiency += $efficiency;
+                $count++;
+            }
+        }
+
+        return $count > 0 ? round($totalEfficiency / $count, 2) : 0;
+    }
+
+    public function getTotalIssues()
+    {
+        return QualityIssue::count();
     }
 
     public function getQualityMetrics($lineId)

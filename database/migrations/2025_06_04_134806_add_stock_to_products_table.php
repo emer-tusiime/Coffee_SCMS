@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::table('products', function (Blueprint $table) {
             $table->integer('stock')->default(0)->after('price');
+            $table->integer('threshold')->default(10)->after('stock');
         });
     }
 
@@ -23,6 +24,7 @@ return new class extends Migration
     {
         Schema::table('products', function (Blueprint $table) {
             $table->dropColumn('stock');
+            $table->dropColumn('threshold');
         });
     }
 };

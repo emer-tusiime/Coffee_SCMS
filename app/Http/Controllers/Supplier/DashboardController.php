@@ -10,6 +10,7 @@ use App\Models\Inventory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Models\Factory;
 
 class DashboardController extends Controller
 {
@@ -20,30 +21,59 @@ class DashboardController extends Controller
 
     public function index()
     {
-        $supplier = Auth::user();
+        $supplierId = Auth::id();
+
+        // All products for this supplier
+        $products = Product::where('supplier_id', $supplierId)->get();
+
+        // Orders from factories to this supplier
+        $pendingOrders = Order::where('supplier_id', $supplierId)
+            ->where('order_type', 'supplier')
+            ->where(function($q) {
+                $q->where('status', 'pending')
+                  ->orWhere('status', false)
+                  ->orWhere('status', 0);
+            })
+            ->with(['factory', 'products'])
+            ->get();
+
+        $deliveredOrders = Order::where('supplier_id', $supplierId)
+            ->where('order_type', 'supplier')
+            ->where(function($q) {
+                $q->whereIn('status', ['accepted', 'delivered'])
+                  ->orWhere('status', true)
+                  ->orWhere('status', 1);
+            })
+            ->with(['factory', 'products'])
+            ->get();
+
+        $allOrders = Order::where('supplier_id', $supplierId)
+            ->where('order_type', 'supplier')
+            ->with(['factory', 'products'])
+            ->get();
+
+        $factories = Factory::all();
 
         // Get counts for overview cards
-        $totalProducts = Product::where('supplier_id', $supplier->id)->count();
-        $activeOrders = Order::whereHas('items.product', function($query) use ($supplier) {
-            $query->where('supplier_id', $supplier->id);
-        })->whereIn('status', ['pending', 'processing'])->count();
-        $lowStockItems = Inventory::whereHas('product', function($query) use ($supplier) {
-            $query->where('supplier_id', $supplier->id);
+        $totalProducts = Product::where('supplier_id', $supplierId)->count();
+        $pendingOrdersCount = $pendingOrders->count();
+        $lowStockItems = Inventory::whereHas('product', function($query) use ($supplierId) {
+            $query->where('supplier_id', $supplierId);
         })->where('quantity', '<=', 10)->count();
-        $pendingMessages = ChatMessage::where('receiver_id', $supplier->id)
+        $pendingMessages = ChatMessage::where('receiver_id', $supplierId)
             ->where('read', false)
             ->count();
 
         // Get recent orders
         $recentOrders = Order::with(['customer', 'items.product'])
-            ->whereHas('items.product', function($query) use ($supplier) {
-                $query->where('supplier_id', $supplier->id);
+            ->whereHas('items.product', function($query) use ($supplierId) {
+                $query->where('supplier_id', $supplierId);
             })
             ->latest()
             ->take(5)
             ->get()
             ->map(function($order) {
-                $order->customer_name = $order->customer->name;
+                $order->customer_name = optional($order->customer)->name;
                 $order->products_count = $order->items->count();
                 $order->status_color = $this->getStatusColor($order->status);
                 return $order;
@@ -51,7 +81,7 @@ class DashboardController extends Controller
 
         // Get recent messages
         $recentMessages = ChatMessage::with('sender')
-            ->where('receiver_id', $supplier->id)
+            ->where('receiver_id', $supplierId)
             ->latest()
             ->take(5)
             ->get()
@@ -61,14 +91,19 @@ class DashboardController extends Controller
             });
 
         // Prepare sales chart data (last 7 days)
-        $salesChartData = $this->prepareSalesChartData($supplier);
+        $salesChartData = $this->prepareSalesChartData($supplierId);
 
         // Prepare inventory chart data
-        $inventoryChartData = $this->prepareInventoryChartData($supplier);
+        $inventoryChartData = $this->prepareInventoryChartData($supplierId);
 
         return view('supplier.dashboard', compact(
+            'products',
+            'pendingOrders',
+            'deliveredOrders',
+            'allOrders',
+            'factories',
             'totalProducts',
-            'activeOrders',
+            'pendingOrdersCount',
             'lowStockItems',
             'pendingMessages',
             'recentOrders',
@@ -89,7 +124,7 @@ class DashboardController extends Controller
         ][$status] ?? 'secondary';
     }
 
-    private function prepareSalesChartData($supplier)
+    private function prepareSalesChartData($supplierId)
     {
         $dates = collect();
         $sales = collect();
@@ -98,8 +133,8 @@ class DashboardController extends Controller
             $date = Carbon::now()->subDays($i);
             $dates->push($date->format('M d'));
 
-            $dailySales = Order::whereHas('items.product', function($query) use ($supplier) {
-                $query->where('supplier_id', $supplier->id);
+            $dailySales = Order::whereHas('items.product', function($query) use ($supplierId) {
+                $query->where('supplier_id', $supplierId);
             })
             ->whereDate('created_at', $date)
             ->sum('total_amount');
@@ -113,10 +148,10 @@ class DashboardController extends Controller
         ];
     }
 
-    private function prepareInventoryChartData($supplier)
+    private function prepareInventoryChartData($supplierId)
     {
-        $inventory = Inventory::whereHas('product', function($query) use ($supplier) {
-            $query->where('supplier_id', $supplier->id);
+        $inventory = Inventory::whereHas('product', function($query) use ($supplierId) {
+            $query->where('supplier_id', $supplierId);
         })->get();
 
         $lowStock = $inventory->where('quantity', '<=', 10)->count();

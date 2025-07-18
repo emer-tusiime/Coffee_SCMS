@@ -10,22 +10,25 @@ class InventoryAlert extends Model
     use HasFactory;
 
     protected $fillable = [
-        'item_id',
+        'product_id',
         'alert_type',
         'message',
         'status',
         'threshold',
-        'current_level'
+        'current_level',
+        'created_at',
+        'updated_at'
     ];
 
     protected $casts = [
         'threshold' => 'float',
         'current_level' => 'float',
+        'status' => 'boolean'
     ];
 
-    // Relationship with inventory item
-    public function item()
+    // Relationship with product
+    public function product()
     {
-        return $this->belongsTo(Item::class);
+        return $this->belongsTo(Product::class);
     }
 }

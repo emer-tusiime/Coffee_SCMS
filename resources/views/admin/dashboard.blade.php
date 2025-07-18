@@ -1,394 +1,306 @@
+<?php
+
+/**
+ * @var \Illuminate\Support\ViewErrorBag $errors
+ * @var int $totalOrders
+ * @var float $productionEfficiency
+ * @var int $inventoryAlertsCount
+ * @var int $totalQualityIssues
+ * @var \Illuminate\Support\Collection $inventoryAlerts
+ * @var \Illuminate\Support\Collection $recentQualityIssues
+ * @var \Illuminate\Support\Collection $supplierPerformance
+ * @var int $totalUsers
+ * @var int $customerCount
+ * @var int $supplierCount
+ * @var \Illuminate\Support\Collection $pendingAccounts
+ * @var int $qualityIssues
+ * @var \Illuminate\Support\Collection $productionLines
+ * @var int $totalCoffeeSales
+ * @var int $totalCoffeeValue
+ * @var int $pendingCoffeeSales
+ * @var \Illuminate\Support\Collection $topSellingProducts
+ * @var array $demandPrediction
+ * @var array $qualityPrediction
+ * @var \Illuminate\Support\Collection $topSuppliers
+ */
+
+?>
 @extends('layouts.dashboard')
 
 @section('title', 'Admin Dashboard - Coffee SCMS')
 
 @section('dashboard-title')
-    <i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard
-@endsection
-
-@section('dashboard-actions')
-    <div class="btn-group">
-        <button type="button" class="btn btn-outline-primary" id="export-report">
-            <i class="fas fa-download me-1"></i> Export Report
-        </button>
-        <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#quickActionsModal">
-            <i class="fas fa-bolt me-1"></i> Quick Actions
-        </button>
+    <div class="d-flex justify-content-between align-items-center">
+        <h1 class="m-0">Admin Dashboard</h1>
     </div>
 @endsection
 
 @section('dashboard-content')
-    <!-- Quick Stats -->
-    <div class="row">
-        <div class="col-lg-3 col-md-6">
-            <div class="small-box bg-gradient-primary">
-                <div class="inner">
-                    <h3>{{ $totalOrders }}</h3>
-                    <p>New Orders</p>
+    <!-- Welcome Card -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow rounded-4 bg-gradient-info text-white border-0">
+                <div class="card-body d-flex flex-column flex-md-row align-items-center justify-content-between">
+                    <div>
+                        <h2 class="fw-bold mb-1">Welcome back, {{ Auth::user()->name ?? 'Admin' }}!</h2>
+                        <p class="mb-0">Here's a quick overview of your system. Have a productive day managing Coffee SCMS ☕</p>
                 </div>
-                <div class="icon">
-                    <i class="fas fa-shopping-cart"></i>
+                    <div class="d-none d-md-block">
+                        <i class="fas fa-user-shield fa-4x opacity-25"></i>
                 </div>
-                <a href="{{ route('admin.orders.index') }}" class="small-box-footer">
-                    View Details <i class="fas fa-arrow-circle-right"></i>
-                </a>
+                </div>
             </div>
         </div>
+                </div>
 
-        <div class="col-lg-3 col-md-6">
-            <div class="small-box bg-gradient-success">
-                <div class="inner">
-                    <h3>{{ $productionEfficiency }}%</h3>
-                    <p>Production Efficiency</p>
+    <!-- Simple Stats Row for Suppliers, Wholesalers, Factories -->
+    <div class="row mb-4 g-4">
+        <div class="col-md-4">
+            <div class="card shadow rounded-4 border-0 text-center">
+                <div class="card-body">
+                    <i class="fas fa-truck fa-2x text-info mb-2"></i>
+                    <h4 class="fw-bold mb-1">Suppliers</h4>
+                    <div class="display-6 fw-bold">{{ \App\Models\User::where('role', 'supplier')->count() }}</div>
                 </div>
-                <div class="icon">
-                    <i class="fas fa-industry"></i>
-                </div>
-                <a href="{{ route('admin.production.efficiency') }}" class="small-box-footer">
-                    View Details <i class="fas fa-arrow-circle-right"></i>
-                </a>
             </div>
         </div>
-
-        <div class="col-lg-3 col-md-6">
-            <div class="small-box bg-gradient-warning">
-                <div class="inner">
-                    <h3>{{ $inventoryAlerts }}</h3>
-                    <p>Inventory Alerts</p>
+        <div class="col-md-4">
+            <div class="card shadow rounded-4 border-0 text-center">
+                <div class="card-body">
+                    <i class="fas fa-industry fa-2x text-warning mb-2"></i>
+                    <h4 class="fw-bold mb-1">Wholesalers</h4>
+                    <div class="display-6 fw-bold">{{ \App\Models\User::where('role', 'wholesaler')->count() }}</div>
                 </div>
-                <div class="icon">
-                    <i class="fas fa-exclamation-triangle"></i>
-                </div>
-                <a href="{{ route('admin.inventory.alerts') }}" class="small-box-footer">
-                    View Details <i class="fas fa-arrow-circle-right"></i>
-                </a>
             </div>
         </div>
-
-        <div class="col-lg-3 col-md-6">
-            <div class="small-box bg-gradient-danger">
-                <div class="inner">
-                    <h3>{{ $qualityIssues }}</h3>
-                    <p>Quality Issues</p>
+        <div class="col-md-4">
+            <div class="card shadow rounded-4 border-0 text-center">
+                <div class="card-body">
+                    <i class="fas fa-warehouse fa-2x text-success mb-2"></i>
+                    <h4 class="fw-bold mb-1">Factories</h4>
+                    <div class="display-6 fw-bold">{{ \App\Models\User::where('role', 'factory')->count() }}</div>
                 </div>
-                <div class="icon">
-                    <i class="fas fa-bug"></i>
-                </div>
-                <a href="{{ route('admin.quality.issues') }}" class="small-box-footer">
-                    View Details <i class="fas fa-arrow-circle-right"></i>
-                </a>
             </div>
         </div>
     </div>
 
-    <div class="row">
-        <!-- Production Line Status -->
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header border-0">
-                    <h3 class="card-title">
-                        <i class="fas fa-industry me-2"></i>Production Line Status
-                    </h3>
-                    <div class="card-tools">
-                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                            <i class="fas fa-minus"></i>
-                        </button>
-                        <button type="button" class="btn btn-tool" data-card-widget="maximize">
-                            <i class="fas fa-expand"></i>
-                        </button>
-                    </div>
+    <!-- System Health and Quick Links Row -->
+    <div class="row mb-4 g-4">
+        <div class="col-md-6">
+            <div class="card shadow rounded-4 border-0 h-100">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-heartbeat text-danger me-2"></i>System Health</h5>
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Line</th>
-                                    <th>Status</th>
-                                    <th>Efficiency</th>
-                                    <th>Current Batch</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($productionLines as $line)
-                                <tr>
-                                    <td>{{ $line['name'] }}</td>
-                                    <td>
-                                        <span class="badge bg-{{ $line['status'] === 'active' ? 'success' : ($line['status'] === 'maintenance' ? 'warning' : 'danger') }}">
-                                            {{ ucfirst($line['status']) }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div class="progress">
-                                            <div class="progress-bar bg-{{ $line['efficiency'] >= 80 ? 'success' : ($line['efficiency'] >= 60 ? 'warning' : 'danger') }}"
-                                                role="progressbar" style="width: {{ $line['efficiency'] }}%">
-                                                {{ $line['efficiency'] }}%
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>{{ $line['current_batch'] ?? 'N/A' }}</td>
-                                    <td>
-                                        <div class="btn-group">
-                                            <button type="button" class="btn btn-sm btn-info" title="View Details">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-warning" title="Maintenance">
-                                                <i class="fas fa-tools"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex align-items-center"><i class="fas fa-database text-primary me-2"></i> Database: <span class="badge bg-success ms-auto">Connected</span></li>
+                        <li class="list-group-item d-flex align-items-center"><i class="fas fa-server text-secondary me-2"></i> Server Status: <span class="badge bg-success ms-auto">Online</span></li>
+                        <li class="list-group-item d-flex align-items-center"><i class="fas fa-clock text-warning me-2"></i> Last Backup: <span class="ms-auto">{{ now()->subDays(1)->format('M d, Y H:i') }}</span></li>
+                        <li class="list-group-item d-flex align-items-center"><i class="fas fa-users text-info me-2"></i> Active Users: <span class="ms-auto">{{ \App\Models\User::where('status', 'active')->count() }}</span></li>
+                    </ul>
+                    <div class="mt-4">
+                        <canvas id="systemHealthChart" height="80"></canvas>
                     </div>
                 </div>
             </div>
         </div>
+        <div class="col-md-6 d-flex flex-column gap-4">
+            <div class="card shadow rounded-4 border-0 h-100 mb-3">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-link text-primary me-2"></i>Quick Links</h5>
+                </div>
+                <div class="card-body d-flex flex-wrap gap-4 justify-content-center">
+                    <a href="{{ route('admin.users.index', ['role' => 'supplier']) }}" class="text-decoration-none text-center">
+                        <i class="fas fa-truck fa-2x text-info mb-1"></i><br><span class="fw-semibold">Suppliers</span>
+                    </a>
+                    <a href="{{ route('admin.users.index', ['role' => 'wholesaler']) }}" class="text-decoration-none text-center">
+                        <i class="fas fa-industry fa-2x text-warning mb-1"></i><br><span class="fw-semibold">Wholesalers</span>
+                    </a>
+                    <a href="{{ route('admin.users.index', ['role' => 'factory']) }}" class="text-decoration-none text-center">
+                        <i class="fas fa-warehouse fa-2x text-success mb-1"></i><br><span class="fw-semibold">Factories</span>
+                    </a>
+                </div>
+            </div>
+            <a href="{{ route('admin.quality.issues') }}" class="text-decoration-none flex-grow-1">
+                <div class="card bg-danger text-white shadow rounded-4 border-0 h-100">
+                    <div class="card-header border-0 bg-transparent">
+                        <h3 class="card-title">
+                            <i class="fas fa-bug me-2"></i>Quality Issues
+                        </h3>
+        </div>
+                    <div class="card-body text-center">
+                        <h2 class="text-white mb-0 display-4 fw-bold">{{ $totalQualityIssues }}</h2>
+                        <p class="mb-0">Open quality issues in the system</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
 
-        <!-- ML Insights -->
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header border-0">
-                    <h3 class="card-title">
-                        <i class="fas fa-brain me-2"></i>ML Insights
-                    </h3>
-                    <div class="card-tools">
-                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                            <i class="fas fa-minus"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body p-0">
-                    <div class="list-group list-group-flush">
-                        <a href="#" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">Demand Prediction</h6>
-                                <small class="text-success">+15%</small>
-                            </div>
-                            <p class="mb-1">Expected increase in coffee demand next month.</p>
-                        </a>
-                        <a href="#" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">Quality Prediction</h6>
-                                <small class="text-warning">Alert</small>
-                            </div>
-                            <p class="mb-1">Potential quality issues in Line A next week.</p>
-                        </a>
-                        <a href="#" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">Maintenance Prediction</h6>
-                                <small class="text-info">Scheduled</small>
-                            </div>
-                            <p class="mb-1">Line B maintenance recommended in 5 days.</p>
-                        </a>
-                    </div>
-                </div>
-                <div class="card-footer text-center">
-                    <a href="{{ route('admin.ml-insights') }}" class="text-primary">View All Insights</a>
+    <!-- Motivational Quote Card -->
+    <div class="row mb-4">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow rounded-4 border-0 bg-gradient-light">
+                <div class="card-body text-center">
+                    <blockquote class="blockquote mb-0">
+                        <p class="fs-4 fst-italic">“Great things are done by a series of small things brought together.”</p>
+                        <footer class="blockquote-footer mt-2">Vincent Van Gogh</footer>
+                    </blockquote>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row">
-        <!-- Recent Quality Issues -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header border-0">
-                    <h3 class="card-title">
-                        <i class="fas fa-exclamation-circle me-2"></i>Recent Quality Issues
-                    </h3>
-                    <div class="card-tools">
-                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                            <i class="fas fa-minus"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Issue</th>
-                                    <th>Line</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($recentQualityIssues as $issue)
-                                <tr>
-                                    <td>#{{ $issue->id }}</td>
-                                    <td>{{ Str::limit($issue->description, 30) }}</td>
-                                    <td>{{ $issue->production_line }}</td>
-                                    <td>
-                                        <span class="badge bg-{{ $issue->status_color }}">
-                                            {{ $issue->status }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <a href="{{ route('admin.quality.issues.show', $issue->id) }}"
-                                           class="btn btn-sm btn-outline-primary">
-                                            View
-                                        </a>
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="card-footer text-center">
-                    <a href="{{ route('admin.quality.issues') }}" class="text-primary">View All Issues</a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Supplier Performance -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header border-0">
-                    <h3 class="card-title">
-                        <i class="fas fa-truck me-2"></i>Supplier Performance
-                    </h3>
-                    <div class="card-tools">
-                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                            <i class="fas fa-minus"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Supplier</th>
-                                    <th>On-Time</th>
-                                    <th>Quality</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($supplierPerformance as $supplier)
-                                <tr>
-                                    <td>{{ $supplier->name }}</td>
-                                    <td>
-                                        <div class="progress">
-                                            <div class="progress-bar bg-success"
-                                                 role="progressbar"
-                                                 style="width: {{ $supplier->on_time_delivery }}%">
-                                                {{ $supplier->on_time_delivery }}%
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <span class="me-2">{{ $supplier->quality_score }}/10</span>
-                                            <div class="stars">
-                                                @for($i = 1; $i <= 5; $i++)
-                                                    <i class="fas fa-star{{ $i <= ($supplier->quality_score/2) ? ' text-warning' : ' text-muted' }}"></i>
-                                                @endfor
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-{{ $supplier->status === 'active' ? 'success' : 'warning' }}">
-                                            {{ ucfirst($supplier->status) }}
-                                        </span>
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="card-footer text-center">
-                    <a href="{{ route('admin.suppliers.index') }}" class="text-primary">View All Suppliers</a>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- ML Analytics Charts -->
+    <!-- Future: Add Wholesaler and Factory ML Insights here -->
 @endsection
 
 @push('styles')
 <style>
     .small-box {
-        border-radius: 0.5rem;
-        box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.2);
+        position: relative;
         display: block;
         margin-bottom: 20px;
-        position: relative;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border-radius: 1rem;
+        background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%);
+        transition: box-shadow 0.2s;
     }
-    .small-box .icon {
-        color: rgba(0,0,0,.15);
-        z-index: 0;
+    .small-box:hover {
+        box-shadow: 0 4px 24px rgba(0,0,0,0.12);
     }
-    .small-box .icon i {
-        font-size: 70px;
-        position: absolute;
-        right: 15px;
-        top: 15px;
-        transition: transform .3s linear;
+    .small-box > .inner {
+        padding: 18px 16px 10px 16px;
     }
-    .small-box:hover .icon i {
-        transform: scale(1.1);
-    }
-    .small-box .inner {
-        padding: 20px;
-    }
-    .small-box .inner h3 {
+    .small-box h3 {
         font-size: 2.2rem;
-        font-weight: 700;
-        margin: 0;
+        font-weight: bold;
+        margin: 0 0 10px 0;
         white-space: nowrap;
         padding: 0;
     }
-    .small-box .inner p {
-        font-size: 1rem;
+    .small-box p {
+        font-size: 1.1rem;
         margin-bottom: 0;
     }
+    .small-box .icon {
+        transition: all 0.3s linear;
+        position: absolute;
+        top: 10px;
+        right: 20px;
+        z-index: 0;
+    }
+    .small-box .icon i {
+        font-size: 3.5rem;
+        color: rgba(0,0,0,0.08);
+    }
     .small-box .small-box-footer {
-        background-color: rgba(0,0,0,.1);
-        color: rgba(255,255,255,.8);
-        display: block;
-        padding: 3px 0;
         position: relative;
         text-align: center;
+        padding: 8px 0;
+        color: #fff;
+        color: rgba(255,255,255,0.8);
+        display: block;
+        height: 36px;
+        background: rgba(0,0,0,0.1);
         text-decoration: none;
-        z-index: 10;
+        border-radius: 0 0 1rem 1rem;
+        font-weight: 500;
+        font-size: 1rem;
     }
     .small-box .small-box-footer:hover {
-        background-color: rgba(0,0,0,.15);
         color: #fff;
-    }
-    .progress {
-        height: 0.5rem;
-    }
-    .stars {
-        font-size: 0.8rem;
-    }
-    .card {
-        box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.2);
-        margin-bottom: 1rem;
-    }
-    .card-header {
-        background-color: transparent;
-        border-bottom: 1px solid rgba(0,0,0,.125);
-        padding: 0.75rem 1.25rem;
-        position: relative;
-        border-top-left-radius: 0.25rem;
-        border-top-right-radius: 0.25rem;
+        background: rgba(0,0,0,0.15);
     }
 </style>
 @endpush
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize any charts or interactive elements here
+    // Demand Prediction Chart
+    var demandCtx = document.getElementById('demandChart').getContext('2d');
+    new Chart(demandCtx, {
+        type: 'line',
+        data: {
+            labels: {!! json_encode($demandPrediction['dates'] ?? []) !!},
+            datasets: [{
+                label: 'Predicted Demand',
+                data: {!! json_encode($demandPrediction['predicted'] ?? []) !!},
+                borderColor: 'rgba(54, 162, 235, 1)',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { display: true } } }
+    });
+    // Top Selling Products Chart
+    var topProductsCtx = document.getElementById('topProductsChart').getContext('2d');
+    new Chart(topProductsCtx, {
+        type: 'bar',
+        data: {
+            labels: {!! json_encode($topSellingProducts->pluck('product.name')) !!},
+            datasets: [{
+                label: 'Total Sales',
+                data: {!! json_encode($topSellingProducts->pluck('total_quantity')) !!},
+                backgroundColor: 'rgba(255, 99, 132, 0.5)'
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+    // Supplier Performance Chart
+    var supplierPerfCtx = document.getElementById('supplierPerformanceChart').getContext('2d');
+    new Chart(supplierPerfCtx, {
+        type: 'bar',
+        data: {
+            labels: {!! json_encode($topSuppliers->pluck('supplier_name')) !!},
+            datasets: [
+                {
+                    label: 'On-time Delivery (%)',
+                    data: {!! json_encode($topSuppliers->pluck('on_time_delivery_rate')) !!},
+                    backgroundColor: 'rgba(75, 192, 192, 0.5)'
+                },
+                {
+                    label: 'Quality Score (%)',
+                    data: {!! json_encode($topSuppliers->pluck('quality_score')) !!},
+                    backgroundColor: 'rgba(255, 206, 86, 0.5)'
+                }
+            ]
+        },
+        options: { responsive: true, plugins: { legend: { display: true } } }
+    });
+
+    // System Health Line Chart (sample data for last 7 days)
+    var ctx = document.getElementById('systemHealthChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [
+                @for($i = 6; $i >= 0; $i--)
+                    '{{ now()->subDays($i)->format('M d') }}'@if($i > 0),@endif
+                @endfor
+            ],
+            datasets: [{
+                label: 'Active Users',
+                data: [8, 7, 9, 8, 10, 9, 8], // Replace with real data if available
+                borderColor: 'rgba(54, 162, 235, 1)',
+                backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+                pointBackgroundColor: 'rgba(54, 162, 235, 1)'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1 } }
+            }
+        }
+    });
 });
 </script>
 @endpush

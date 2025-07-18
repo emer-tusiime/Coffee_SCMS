@@ -82,6 +82,11 @@
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     @endif
+                                    @if($user->approved && $user->status === 'active' && !$user->isAdmin())
+                                        <a href="{{ route('admin.users.view-dashboard', $user->id) }}" class="btn btn-sm btn-success" style="font-weight:bold;" title="View Dashboard (Test)">
+                                            <i class="fas fa-eye"></i> Dashboard
+                                        </a>
+                                    @endif
                                 </div>
                                 <form id="delete-user-{{ $user->id }}"
                                       action="{{ route('admin.users.destroy', $user) }}"

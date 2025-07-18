@@ -136,4 +136,20 @@ class SupplierAnalyticsService
 
         return round(($totalScore / $maxPossibleScore) * 100, 2);
     }
+
+    /**
+     * Get performance metrics for all suppliers
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function getAllPerformanceMetrics()
+    {
+        return \App\Models\Supplier::all()->map(function ($supplier) {
+            $metrics = $this->getPerformanceMetrics($supplier->id);
+            $supplier->delivery_rate = $metrics['delivery_rate'];
+            $supplier->quality_score = $metrics['quality_score'];
+            $supplier->status = $metrics['status'];
+            return $supplier;
+        });
+    }
 }

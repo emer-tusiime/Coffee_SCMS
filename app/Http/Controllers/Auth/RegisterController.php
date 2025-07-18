@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Providers\RouteServiceProvider;
 use App\Models\User;
 use Illuminate\Foundation\Auth\RegistersUsers;
+use App\Notifications\AccountPendingApprovalNotification;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
+use Illuminate\Auth\Events\Registered;
 
 class RegisterController extends Controller
 {
@@ -25,6 +27,23 @@ class RegisterController extends Controller
     */
 
     use RegistersUsers;
+
+    /**
+     * Handle a registration request for the application.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function register(Request $request)
+    {
+        $this->validator($request->all())->validate();
+
+        $user = $this->create($request->all());
+        event(new Registered($user));
+
+        return redirect()->route('registration.success')
+            ->with('success', 'Registration successful! Your account is pending admin approval.');
+    }
 
     /**
      * Where to redirect users after registration.
@@ -66,7 +85,8 @@ class RegisterController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'role' => ['required', 'string', 'in:customer,supplier,factory,retailer,wholesaler,workforce_manager'],
+            'role' => ['required', 'string', 'in:supplier,factory,wholesaler,retailer'],
+            'contact_info' => ['required', 'string', 'max:255']
         ]);
     }
 
@@ -78,23 +98,37 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
-        // Ensure admin role cannot be assigned during registration
-        if ($data['role'] === 'admin') {
-            $data['role'] = 'customer';
-        }
-
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'role' => $data['role'],
-            'status' => 'active', // Set default status
+            'contact_info' => $data['contact_info'],
+            'status' => 'pending',
+            'approved' => false,
+            'approval_message' => 'Account pending approval'
         ]);
 
-        Log::info('User created successfully', [
-            'user_id' => $user->id,
-            'role' => $user->role
-        ]);
+        // Temporarily disable email notifications during development
+        // $user->notify(new AccountPendingApprovalNotification($user));
+
+        // If the user is a factory, create a Factory record
+        if ($user->role === 'factory') {
+            \App\Models\Factory::create([
+                'user_id' => $user->id,
+                'name' => $data['name'] . "'s Factory",
+                'location' => $data['contact_info'] ?? 'Unknown',
+                'capacity' => 1000,
+                'processing_type' => 'Washed',
+                'quality_standard' => 'A',
+                'status' => true,
+                'contact_person' => $data['name'],
+                'contact_email' => $data['email'],
+                'contact_phone' => '0000000000',
+                'operating_hours' => json_encode(['mon-fri' => '8-5']),
+                'certifications' => json_encode(['ISO9001']),
+            ]);
+        }
 
         return $user;
     }
@@ -108,8 +142,9 @@ class RegisterController extends Controller
      */
     protected function registered(Request $request, $user)
     {
-        return redirect()->route($user->getDashboardRoute())
-            ->with('success', 'Registration successful! Welcome to Coffee SCMS.');
+        $message = "Thank you for registering with Coffee SCMS! Your account is pending admin approval. You will receive an email notification once your account is approved. Thank you for your patience.";
+        return redirect()->route('login')
+            ->with('info', $message);
     }
 
     /**
@@ -119,16 +154,6 @@ class RegisterController extends Controller
      */
     protected function redirectTo()
     {
-        if (auth()->check()) {
-            $route = auth()->user()->getDashboardRoute();
-            Log::info('Redirecting after registration', [
-                'user_id' => auth()->id(),
-                'route' => $route
-            ]);
-            return route($route);
-        }
-
-        Log::warning('No authenticated user found after registration');
-        return route('login');
+        return RouteServiceProvider::HOME;
     }
 }

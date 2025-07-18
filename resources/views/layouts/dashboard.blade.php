@@ -91,9 +91,9 @@
         </a>
 
         <!-- Sidebar -->
-        <div class="sidebar">
+        <div class="sidebar d-flex flex-column h-100">
             <!-- Sidebar Menu -->
-            <nav class="mt-2">
+            <nav class="mt-2 flex-grow-1">
                 <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
                     <li class="nav-item">
                         <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
@@ -106,29 +106,6 @@
                             <i class="nav-icon fas fa-users"></i>
                             <p>User Management</p>
                         </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <i class="nav-icon fas fa-industry"></i>
-                            <p>
-                                Production
-                                <i class="fas fa-angle-left right"></i>
-                            </p>
-                        </a>
-                        <ul class="nav nav-treeview">
-                            <li class="nav-item">
-                                <a href="{{ route('admin.production.lines.index') }}" class="nav-link {{ request()->routeIs('admin.production.lines.index') ? 'active' : '' }}">
-                                    <i class="far fa-circle nav-icon"></i>
-                                    <p>Production Lines</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('admin.production.schedule') }}" class="nav-link {{ request()->routeIs('admin.production.schedule') ? 'active' : '' }}">
-                                    <i class="far fa-circle nav-icon"></i>
-                                    <p>Schedule</p>
-                                </a>
-                            </li>
-                        </ul>
                     </li>
                     <li class="nav-item">
                         <a href="#" class="nav-link">
@@ -188,9 +165,14 @@
                             <p>Settings</p>
                         </a>
                     </li>
+                    <li class="nav-item mt-3">
+                        <form action="{{ route('logout') }}" method="POST" class="w-100">
+                            @csrf
+                            <button type="submit" class="sidebar-logout-link nav-link w-100 text-start">Logout</button>
+                        </form>
+                    </li>
                 </ul>
             </nav>
-            <!-- /.sidebar-menu -->
         </div>
         <!-- /.sidebar -->
     </aside>
@@ -245,6 +227,30 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <!-- Custom scripts -->
 <script src="{{ asset('js/custom.js') }}"></script>
+@push('styles')
+<style>
+.sidebar-logout-link {
+    background: none;
+    border: none;
+    color: #dc3545;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border-radius: 0.375rem;
+    transition: background 0.2s, color 0.2s;
+    cursor: pointer;
+    text-align: left;
+    display: block;
+    letter-spacing: 0.5px;
+    padding: 0.5rem 1rem;
+}
+.sidebar-logout-link:hover, .sidebar-logout-link:focus {
+    background: #fff;
+    color: #dc3545;
+    text-decoration: none;
+    outline: none;
+}
+</style>
+@endpush
 @stack('scripts')
 
 </body>

@@ -125,4 +125,28 @@ class QualityPredictionService
             ]
         ];
     }
+
+    /**
+     * Get the total number of quality issues
+     *
+     * @return int
+     */
+    public function getTotalIssues(): int
+    {
+        return \App\Models\QualityIssue::count();
+    }
+
+    /**
+     * Get the most recent quality issues
+     *
+     * @param int $limit
+     * @return \Illuminate\Support\Collection
+     */
+    public function getRecentIssues(int $limit = 5)
+    {
+        return \App\Models\QualityIssue::with(['productionLine'])
+            ->orderBy('created_at', 'desc')
+            ->take($limit)
+            ->get();
+    }
 }

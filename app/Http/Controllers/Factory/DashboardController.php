@@ -10,6 +10,7 @@ use App\Services\MachineLearning\ProductionAnalyticsService;
 use App\Services\MachineLearning\QualityPredictionService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use App\Models\Product;
 
 class DashboardController extends Controller
 {
@@ -27,6 +28,33 @@ class DashboardController extends Controller
 
     public function index()
     {
+        $factory = auth()->user()->factory;
+        $totalProducts = $factory ? Product::where('factory_id', $factory->id)
+            ->where('type', 'processed')
+            ->count() : 0;
+        $activeProducts = $factory ? Product::where('factory_id', $factory->id)->where('status', true)->count() : 0;
+        $supplierCount = $factory ? \App\Models\User::where('role', 'supplier')->where('approved', true)->count() : 0;
+        $pendingOrders = $factory ? \App\Models\Order::where('factory_id', $factory->id)->where('status', false)->count() : 0;
+        $totalOrders = $factory ? \App\Models\Order::where('factory_id', $factory->id)->count() : 0;
+        $recentOrders = $factory ? \App\Models\Order::where('factory_id', $factory->id)
+            ->with('supplier')
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get() : collect();
+        // Calculate total products in stock (count of products for this factory)
+        $totalProductsInStock = $factory ? Product::where('factory_id', $factory->id)
+            ->where('type', 'processed')
+            ->count() : 0;
+        // Calculate pending supplier orders (order_type = 'supplier', status = 'pending')
+        $pendingSupplierOrders = $factory ? \App\Models\Order::where('factory_id', $factory->id)
+            ->where('order_type', 'supplier')
+            ->where('status', 'pending')
+            ->count() : 0;
+        // Calculate pending wholesaler orders (order_type = 'wholesaler', status = 'pending')
+        $pendingWholesalerOrders = $factory ? \App\Models\Order::where('factory_id', $factory->id)
+            ->where('order_type', 'wholesaler')
+            ->where('status', 'pending')
+            ->count() : 0;
         // Production Line Statistics
         $productionLines = ProductionLine::withCount(['qualityIssues' => function($query) {
             $query->where('status', 'open');
@@ -51,13 +79,27 @@ class DashboardController extends Controller
         // Workforce Status
         $workforceStatus = $this->getWorkforceStatus();
 
+        // Add $stats array for dashboard cards
+        $stats = [
+            'total_products' => $totalProducts,
+            'active_products' => $activeProducts,
+            'pending_orders' => $pendingOrders,
+            'total_orders' => $totalOrders,
+            'supplier_count' => $supplierCount,
+            'recent_orders' => $recentOrders,
+            'total_products_in_stock' => $totalProductsInStock,
+            'pending_supplier_orders' => $pendingSupplierOrders,
+            'pending_wholesaler_orders' => $pendingWholesalerOrders,
+        ];
+
         return view('factory.dashboard', compact(
             'productionLines',
             'todayQualityIssues',
             'pendingMaintenance',
             'productionEfficiency',
             'qualityPredictions',
-            'workforceStatus'
+            'workforceStatus',
+            'stats'
         ));
     }
 

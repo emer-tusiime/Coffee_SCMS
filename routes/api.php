@@ -28,6 +28,10 @@ Route::middleware('auth:sanctum')->group(function () {
         return $request->user();
     });
 
+    Route::middleware(['auth:sanctum', 'role:factory'])->prefix('suppliers')->group(function () {
+        // Route::get('{supplier}/products', [SupplierProductController::class, 'getProducts']);
+    });
+
     // Products
     Route::apiResource('products', ApiProductController::class);
 

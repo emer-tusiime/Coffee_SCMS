@@ -28,7 +28,7 @@ class LoginController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('guest')->except('logout');
+        $this->middleware('guest')->except(['logout', 'showLoginForm']);
     }
 
     /**
@@ -47,17 +47,23 @@ class LoginController extends Controller
      */
     public function login(Request $request)
     {
-        // Clear any existing session data
-        $request->session()->regenerate();
+        // Ensure session is started
+        if (!$request->session()->isStarted()) {
+            $request->session()->start();
+        }
+
+        // Get CSRF token
+        $token = csrf_token();
+        $request->session()->put('_token', $token);
 
         $this->validateLogin($request);
 
-        // Check if the user exists and is active
+        // Check if the user exists and is approved
         $user = \App\Models\User::where('email', $request->email)->first();
 
-        if ($user && !$user->isActive()) {
+        if ($user && !$user->isApproved()) {
             throw ValidationException::withMessages([
-                $this->username() => ['Your account is not active. Please contact support.'],
+                $this->username() => ['Your account is pending admin approval. Please wait for approval before trying to log in.'],
             ]);
         }
 
@@ -88,6 +94,14 @@ class LoginController extends Controller
      */
     protected function redirectTo()
     {
+        $user = auth()->user();
+        
+        // If user is not approved, redirect to login with message
+        if (!$user->isApproved()) {
+            session()->flash('warning', 'Your account is pending admin approval. Please wait for approval before trying to log in.');
+            return route('login');
+        }
+
         // Get the intended URL from session
         $intendedUrl = session('url.intended');
         
@@ -95,8 +109,6 @@ class LoginController extends Controller
         if ($intendedUrl && $intendedUrl !== route('login')) {
             return $intendedUrl;
         }
-
-        $user = auth()->user();
         
         if (!$user) {
             return route('login');

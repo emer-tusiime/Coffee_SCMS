@@ -7,9 +7,9 @@
 @section('content')
 <style>
     body {
+        min-height: 100vh;
         background: url('/images/coffeeBG.jpg') no-repeat center center fixed;
         background-size: cover;
-        min-height: 100vh;
         position: relative;
     }
     .dark-overlay {
@@ -118,7 +118,7 @@
             @csrf
             <div class="mb-4">
                 <label for="name" class="form-label">Full Name</label>
-                <input id="name" type="text" class="form-control @error('name') is-invalid @enderror" name="name" value="{{ old('name') }}" required autocomplete="name" autofocus>
+                <input id="name" type="text" class="form-control @error('name') is-invalid @enderror" name="name" value="{{ old('name') }}" required autocomplete="name" autofocus placeholder="Enter name">
 
                 @error('name')
                     <span class="invalid-feedback" role="alert">
@@ -129,9 +129,21 @@
 
             <div class="mb-4">
                 <label for="email" class="form-label">Email Address</label>
-                <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email">
+                <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" placeholder="ccc@gmail.com">
 
                 @error('email')
+                    <span class="invalid-feedback" role="alert">
+                        <strong>{{ $message }}</strong>
+                    </span>
+                @enderror
+            </div>
+
+            <div class="mb-4">
+                <label for="contact_info" class="form-label">Contact Information</label>
+                <input id="contact_info" type="text" class="form-control @error('contact_info') is-invalid @enderror" name="contact_info" value="{{ old('contact_info') }}" required autocomplete="contact_info" placeholder="Enter contact info">
+                <div class="form-text">Please provide your contact information (phone number or business email).</div>
+
+                @error('contact_info')
                     <span class="invalid-feedback" role="alert">
                         <strong>{{ $message }}</strong>
                     </span>
@@ -141,12 +153,11 @@
             <div class="mb-3">
                 <label for="role" class="form-label">Role</label>
                 <select id="role" class="form-select @error('role') is-invalid @enderror" name="role" required>
-                    <option value="customer">Customer</option>
+                    <option value="" disabled selected>Select role</option>
                     <option value="supplier">Supplier</option>
                     <option value="factory">Factory</option>
                     <option value="retailer">Retailer</option>
                     <option value="wholesaler">Wholesaler</option>
-                    <option value="workforce_manager">Workforce Manager</option>
                 </select>
 
                 @error('role')
@@ -158,7 +169,7 @@
 
             <div class="mb-4">
                 <label for="password" class="form-label">Password</label>
-                <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="new-password">
+                <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="new-password" placeholder="Enter password">
 
                 @error('password')
                     <span class="invalid-feedback" role="alert">
@@ -169,7 +180,7 @@
 
             <div class="mb-4">
                 <label for="password-confirm" class="form-label">Confirm Password</label>
-                <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required autocomplete="new-password">
+                <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required autocomplete="new-password" placeholder="Confirm password">
             </div>
 
             <div class="mb-4">

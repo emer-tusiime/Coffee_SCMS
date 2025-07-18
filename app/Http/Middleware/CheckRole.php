@@ -19,6 +19,11 @@ class CheckRole
             return redirect('login');
         }
 
+        // Allow admin to access the admin.users.view-dashboard route
+        if (Auth::user()->isAdmin() && $request->routeIs('admin.users.view-dashboard')) {
+            return $next($request);
+        }
+
         if (!Auth::user()->hasRole($role)) {
             // Redirect to their appropriate dashboard if they're logged in but wrong role
             return redirect()->route(Auth::user()->getDashboardRoute())

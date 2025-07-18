@@ -109,7 +109,11 @@
                 flex-direction: column;
                 align-items: center;
                 padding-top: 2rem;
-                box-shadow: 2px 0 16px rgba(111, 78, 55, 0.10);
+                box-shadow: none !important;
+                border-right: none !important;
+            }
+            body {
+                background: #f8f9fa !important;
             }
             .coffee-sidebar .logo {
                 width: 56px;
@@ -152,23 +156,41 @@
                 margin-top: auto;
                 margin-bottom: 2rem;
             }
+            .main-content {
+                flex: 1;
+                padding-left: 250px;
+                padding-top: 0;
+            }
+            @media (max-width: 768px) {
+                .main-content {
+                    padding-left: 0;
+                }
+                .coffee-sidebar {
+                    width: 100vw;
+                    position: relative;
+                    height: auto;
+                }
+            }
         </style>
-        <div class="coffee-sidebar">
-            <img src="/images/coffee.png" alt="Coffee SCMS Logo" class="logo">
-            <div class="app-name">Coffee SCMS</div>
-            <nav class="nav flex-column w-100">
-                <a href="#overview" class="nav-link"><i class="fa fa-home"></i> Overview</a>
-                <a href="{{ route('supplier.application.status') }}" class="nav-link"><i class="fa fa-file-alt"></i> Vendor Application</a>
-            </nav>
-            <div class="sidebar-bottom w-100">
-                                    <form method="POST" action="{{ route('logout') }}">
-                                        @csrf
-                    <button type="submit" class="nav-link w-100" style="background:rgba(255,255,255,0.10); color:#fff;"><i class="fa fa-sign-out-alt"></i> Logout</button>
-                                    </form>
+        <div style="display: flex; min-height: 100vh;">
+            <div class="coffee-sidebar">
+                <img src="/images/coffee.png" alt="Coffee SCMS Logo" class="logo">
+                <div class="app-name">Coffee SCMS</div>
+                <nav class="nav flex-column w-100">
+                    <a href="/dashboard" class="nav-link"><i class="fa fa-tachometer-alt"></i> Dashboard</a>
+                    <a href="{{ route('supplier.products.index') }}" class="nav-link"><i class="fa fa-box"></i> Products</a>
+                    <a href="/supplier/orders" class="nav-link"><i class="fa fa-shopping-cart"></i> Factory Orders</a>
+                </nav>
+                <div class="sidebar-bottom w-100">
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="nav-link w-100" style="background:rgba(255,255,255,0.10); color:#fff;"><i class="fa fa-sign-out-alt"></i> Logout</button>
+                    </form>
+                </div>
             </div>
-        </div>
-        <div style="margin-left:230px; min-height:100vh;">
-            @yield('content')
+            <div class="main-content">
+                @yield('content')
+            </div>
         </div>
     @elseif(Auth::check() && Auth::user()->role === 'customer')
         <style>
@@ -185,7 +207,11 @@
                 flex-direction: column;
                 align-items: center;
                 padding-top: 2rem;
-                box-shadow: 2px 0 16px rgba(111, 78, 55, 0.10);
+                box-shadow: none !important;
+                border-right: none !important;
+            }
+            body {
+                background: #f8f9fa !important;
             }
             .coffee-sidebar .logo {
                 width: 56px;
@@ -237,7 +263,7 @@
                 <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#makeOrderModal"><i class="fa fa-mug-hot"></i> Make Order</a>
                 <a href="{{ route('customer.orders.index') }}" class="nav-link {{ request()->routeIs('customer.orders.*') ? 'active' : '' }}"><i class="fa fa-box"></i> My Orders</a>
                 <a href="#" class="nav-link"><i class="fa fa-user"></i> Profile</a>
-    </nav>
+            </nav>
             <div class="sidebar-bottom w-100">
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
@@ -245,9 +271,138 @@
                 </form>
             </div>
         </div>
-        <div style="margin-left:230px; min-height:100vh;">
-        @yield('content')
-    </div>
+        <div style="min-height:100vh;">
+            @yield('content')
+        </div>
+    @elseif(Auth::check() && Auth::user()->role === 'retailer')
+        <style>
+            .coffee-sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                width: 250px;
+                background: #2c3e50;
+                color: #fff;
+                z-index: 1000;
+                padding-top: 20px;
+                box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            }
+            .coffee-content {
+                margin-left: 250px;
+                padding: 20px;
+            }
+            .sidebar-header {
+                padding: 10px 20px;
+                margin-bottom: 20px;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+            }
+            .sidebar-menu {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+            .sidebar-menu li a {
+                display: block;
+                padding: 12px 20px;
+                color: #ecf0f1;
+                text-decoration: none;
+                transition: all 0.3s;
+            }
+            .sidebar-menu li a:hover,
+            .sidebar-menu li a.active {
+                background: #34495e;
+                color: #3498db;
+            }
+            .sidebar-menu li a i {
+                margin-right: 10px;
+                width: 20px;
+                text-align: center;
+            }
+            .main-header {
+                background: #fff;
+                padding: 15px 20px;
+                border-bottom: 1px solid #e0e0e0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .user-menu {
+                display: flex;
+                align-items: center;
+            }
+            .user-menu img {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                margin-right: 10px;
+            }
+        </style>
+        
+        <div class="d-flex">
+            <!-- Sidebar -->
+            <div class="coffee-sidebar">
+                <div class="sidebar-header">
+                    <h4 class="mb-0">Retailer Panel</h4>
+                    <small class="text-muted">Coffee SCMS</small>
+                </div>
+                
+                <ul class="sidebar-menu">
+                    <li><a href="{{ route('retailer.dashboard') }}" class="{{ request()->is('retailer/dashboard*') ? 'active' : '' }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a href="{{ route('retailer.orders.create') }}" class="{{ request()->routeIs('retailer.orders.create') ? 'active' : '' }}"><i class="fas fa-plus"></i> Make Order</a></li>
+                    <li><a href="{{ route('retailer.orders.index') }}" class="{{ request()->is('retailer/orders*') ? 'active' : '' }}"><i class="fas fa-shopping-cart"></i> View Orders</a></li>
+                    <li><a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                </ul>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="flex-grow-1">
+                <header class="main-header">
+                    <h5 class="mb-0">@yield('title', 'Dashboard')</h5>
+                    <div class="user-menu">
+                        <span class="me-3">{{ Auth::user()->name }}</span>
+                        <div class="dropdown">
+                            <a href="#" class="dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=random" alt="User">
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Profile</a></li>
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i> Settings</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('logout') }}" 
+                                       onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                        <i class="fas fa-sign-out-alt me-2"></i> Logout
+                                    </a>
+                                    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                                        @csrf
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </header>
+                
+                <main class="coffee-content">
+                    @if(session('success'))
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            {{ session('success') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    @endif
+                    
+                    @if(session('error'))
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            {{ session('error') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    @endif
+                    
+                    @yield('content')
+                </main>
+            </div>
+        </div>
+
     @elseif(Auth::check() && Auth::user()->role === 'factory')
         <style>
             .coffee-sidebar {
@@ -263,59 +418,21 @@
                 flex-direction: column;
                 align-items: center;
                 padding-top: 2rem;
-                box-shadow: 2px 0 16px rgba(78, 52, 46, 0.10);
+                box-shadow: none !important;
+                border-right: none !important;
             }
-            .coffee-sidebar .logo {
-                width: 56px;
-                height: 56px;
-                border-radius: 50%;
-                background: #fff;
-                object-fit: cover;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.10);
-                margin-bottom: 1rem;
-            }
-            .coffee-sidebar .app-name {
-                font-size: 1.4rem;
-                font-weight: 700;
-                letter-spacing: 1px;
-                margin-bottom: 2.5rem;
-            }
-            .coffee-sidebar .nav {
-                width: 100%;
-            }
-            .coffee-sidebar .nav-link {
-                color: #fff;
-                font-size: 1.08rem;
-                font-weight: 500;
-                padding: 0.85rem 2rem;
-                border-radius: 12px 0 0 12px;
-                margin-bottom: 0.5rem;
-                display: flex;
-                align-items: center;
-                transition: background 0.18s;
-            }
-            .coffee-sidebar .nav-link i {
-                margin-right: 0.8rem;
-                font-size: 1.2rem;
-            }
-            .coffee-sidebar .nav-link.active, .coffee-sidebar .nav-link:hover {
-                background: rgba(255,255,255,0.13);
-                color: #ffe0b2;
-            }
-            .coffee-sidebar .sidebar-bottom {
-                margin-top: auto;
-                margin-bottom: 2rem;
+            .main-content {
+                margin-left: 230px;
+                min-height: 100vh;
+                padding: 2rem 2rem 2rem 2rem;
+                background: #f8f9fa;
             }
         </style>
         <div class="coffee-sidebar">
-            <img src="/images/coffee.png" alt="Coffee SCMS Logo" class="logo">
             <div class="app-name">Coffee SCMS</div>
             <nav class="nav flex-column w-100">
                 <a href="{{ route('factory.dashboard') }}" class="nav-link {{ request()->routeIs('factory.dashboard') ? 'active' : '' }}"><i class="fa fa-tachometer-alt"></i> Dashboard</a>
                 <a href="{{ route('factory.production.lines') }}" class="nav-link {{ request()->routeIs('factory.production.lines') ? 'active' : '' }}"><i class="fa fa-industry"></i> Production Lines</a>
-                <a href="{{ route('factory.quality.control') }}" class="nav-link {{ request()->routeIs('factory.quality.control') ? 'active' : '' }}"><i class="fa fa-check-circle"></i> Quality Control</a>
-                <a href="{{ route('factory.maintenance') }}" class="nav-link {{ request()->routeIs('factory.maintenance') ? 'active' : '' }}"><i class="fa fa-tools"></i> Maintenance</a>
-                <a href="{{ route('factory.workforce') }}" class="nav-link {{ request()->routeIs('factory.workforce') ? 'active' : '' }}"><i class="fa fa-users"></i> Workforce</a>
             </nav>
             <div class="sidebar-bottom w-100">
                 <form method="POST" action="{{ route('logout') }}">
@@ -324,7 +441,52 @@
                 </form>
             </div>
         </div>
-        <div style="margin-left:230px; min-height:100vh;">
+        <div class="main-content">
+            @yield('content')
+        </div>
+    @elseif(Auth::check() && Auth::user()->role === 'wholesaler')
+        <style>
+            .coffee-sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                width: 230px;
+                background: linear-gradient(180deg, #795548 0%, #a67c52 100%);
+                color: #fff;
+                z-index: 2000;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding-top: 2rem;
+            }
+            .main-content {
+                margin-left: 230px;
+                min-height: 100vh;
+                padding: 2rem;
+                background: #f8f9fa;
+            }
+        </style>
+        <div class="coffee-sidebar">
+            {{-- Removed the image as per user request --}}
+            <div class="app-name">Coffee SCMS</div>
+            <nav class="nav flex-column w-100">
+                <a href="{{ route('wholesaler.dashboard') }}" class="nav-link"><i class="fa fa-tachometer-alt"></i> Dashboard</a>
+                <a href="{{ route('wholesaler.orders.create') }}" class="nav-link"><i class="fa fa-plus"></i> Make an Order</a>
+                <a href="{{ route('wholesaler.orders.index') }}" class="nav-link"><i class="fa fa-shopping-cart"></i> Orders</a>
+                <a href="{{ route('wholesaler.retailer.orders.index') }}" class="nav-link"><i class="fa fa-users"></i> Retailer Orders</a>
+                <a href="{{ route('wholesaler.reports') }}" class="nav-link"><i class="fa fa-chart-bar"></i> Reports</a>
+            </nav>
+            <div class="sidebar-bottom w-100">
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="nav-link w-100" style="background:rgba(255,255,255,0.10); color:#fff;">
+                        <i class="fa fa-sign-out-alt"></i> Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+        <div class="main-content">
             @yield('content')
         </div>
     @endif
