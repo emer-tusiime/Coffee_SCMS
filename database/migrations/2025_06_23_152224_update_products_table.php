@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('products', function (Blueprint $table) {
             $table->foreignId('factory_id')->nullable()->constrained('users')->onDelete('set null');
-            $table->enum('type', ['raw', 'processed'])->default('raw');
+            $table->string('type')->default('raw');
             $table->string('quality_grade')->nullable();
             $table->string('units')->default('kg');
             $table->integer('min_order_quantity')->default(1);

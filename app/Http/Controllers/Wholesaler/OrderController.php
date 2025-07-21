@@ -204,10 +204,10 @@ class OrderController extends RetailerOrderController
         ]);
         // Notify factory
         if ($order->factory && $order->factory->user) {
-            $order->factory->user->notify(new \App\Notifications\OrderStatusChangedNotification(
-                $order,
-                'Wholesale Order Cancelled'
-            ));
+        $order->factory->user->notify(new \App\Notifications\OrderStatusChangedNotification(
+            $order, 
+            'Wholesale Order Cancelled'
+        ));
         }
         return redirect()->route('wholesaler.orders.index')
             ->with('success', 'Order cancelled successfully.');

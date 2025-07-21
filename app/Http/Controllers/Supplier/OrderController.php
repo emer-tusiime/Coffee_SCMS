@@ -21,11 +21,7 @@ class OrderController extends Controller
         $supplier = Auth::user();
         // Pending orders: status = 'pending', false, or 0
         $pendingOrders = Order::where('supplier_id', $supplier->id)
-            ->where(function($q) {
-                $q->where('status', 'pending')
-                  ->orWhere('status', false)
-                  ->orWhere('status', 0);
-            })
+            ->where('status', 'pending')
             ->orderBy('created_at', 'desc')
             ->get();
         // Completed orders: status = 'accepted', 'delivered', true, or 1
@@ -78,7 +74,7 @@ class OrderController extends Controller
     public function accept(Request $request, Order $order)
     {
         $supplier = Auth::user();
-        if ($order->supplier_id !== $supplier->id || $order->status) {
+        if ($order->supplier_id !== $supplier->id || $order->status !== 'pending') {
             $message = 'Invalid order or already processed';
             if ($request->expectsJson()) {
                 return response()->json(['success' => false, 'message' => $message], 400);
@@ -87,7 +83,7 @@ class OrderController extends Controller
         }
 
         $order->update([
-            'status' => true,
+            'status' => 'accepted',
             'supplier_accepted_at' => now(),
             'supplier_accepted_by' => Auth::id()
         ]);
@@ -103,14 +99,14 @@ class OrderController extends Controller
         if ($request->expectsJson()) {
             return response()->json(['success' => true, 'message' => 'Order accepted successfully.']);
         }
-        return redirect()->route('supplier.orders.index')
+        return redirect()->route('supplier.dashboard')
             ->with('success', 'Order accepted successfully.');
     }
 
     public function reject(Request $request, Order $order)
     {
         $supplier = Auth::user();
-        if ($order->supplier_id !== $supplier->id || $order->status) {
+        if ($order->supplier_id !== $supplier->id || $order->status !== 'pending') {
             $message = 'Invalid order or already processed';
             if ($request->expectsJson()) {
                 return response()->json(['success' => false, 'message' => $message], 400);
@@ -119,7 +115,7 @@ class OrderController extends Controller
         }
 
         $order->update([
-            'status' => false,
+            'status' => 'rejected',
             'supplier_rejected_at' => now(),
             'supplier_rejected_by' => Auth::id()
         ]);
@@ -135,7 +131,7 @@ class OrderController extends Controller
         if ($request->expectsJson()) {
             return response()->json(['success' => true, 'message' => 'Order rejected successfully.']);
         }
-        return redirect()->route('supplier.orders.index')
+        return redirect()->route('supplier.dashboard')
             ->with('success', 'Order rejected successfully.');
     }
 

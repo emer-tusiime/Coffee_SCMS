@@ -27,6 +27,11 @@
                             <i class="fas fa-shopping-cart me-2"></i> Orders
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('profile.show') }}">
+                            <i class="fas fa-user me-2"></i> Profile
+                        </a>
+                    </li>
                 </ul>
             </div>
         </nav>

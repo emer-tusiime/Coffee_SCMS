@@ -29,7 +29,8 @@ class User extends Authenticatable
         'contact_info',
         'status',
         'approved',
-        'approval_message'
+        'approval_message',
+        'profile_image',
     ];
 
     /**
@@ -322,5 +323,17 @@ class User extends Authenticatable
     public function wholesalers()
     {
         return $this->belongsToMany(User::class, 'retailer_wholesaler', 'retailer_id', 'wholesaler_id');
+    }
+
+    /**
+     * Get the full URL for the user's profile image, or a default avatar if not set.
+     */
+    public function getProfileImageUrlAttribute()
+    {
+        if ($this->profile_image) {
+            return asset('storage/profile_images/' . $this->profile_image);
+        }
+        // Use a default avatar (could be a static asset or a service like ui-avatars)
+        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=random';
     }
 }

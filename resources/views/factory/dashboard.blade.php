@@ -36,6 +36,11 @@
                         <i class="fas fa-users"></i> Wholesaler Orders
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('profile.show') ? 'active' : '' }}" href="{{ route('profile.show') }}">
+                        <i class="fa fa-user"></i> Profile
+                    </a>
+                </li>
                 <li class="nav-item mt-4">
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf

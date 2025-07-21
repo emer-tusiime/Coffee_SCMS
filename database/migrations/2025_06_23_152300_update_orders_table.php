@@ -26,11 +26,7 @@ return new class extends Migration
 
         // 4. Ensure 'wholesaler' is included in the ENUM for order_type
         Schema::table('orders', function (Blueprint $table) {
-            $table->enum('order_type', ['supplier', 'retailer', 'wholesaler'])->default('retailer')->change();
-        });
-
-        Schema::table('orders', function (Blueprint $table) {
-            $table->enum('order_type', ['supplier', 'retailer', 'wholesaler'])->default('retailer');
+            $table->string('order_type')->default('retailer');
             $table->foreignId('supplier_id')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('factory_id')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamp('delivery_date')->nullable();

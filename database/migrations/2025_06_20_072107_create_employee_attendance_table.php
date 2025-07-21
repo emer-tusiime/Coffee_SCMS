@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('employee_attendances', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('employee_id')->constrained('workforce')->onDelete('cascade');
+            $table->foreignId('employee_id')->constrained('workforces')->onDelete('cascade');
             $table->foreignId('location_id')->constrained('locations')->onDelete('cascade');
             $table->enum('status', ['present', 'absent', 'late', 'leave']);
             $table->text('notes')->nullable();

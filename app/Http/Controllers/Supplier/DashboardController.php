@@ -29,21 +29,13 @@ class DashboardController extends Controller
         // Orders from factories to this supplier
         $pendingOrders = Order::where('supplier_id', $supplierId)
             ->where('order_type', 'supplier')
-            ->where(function($q) {
-                $q->where('status', 'pending')
-                  ->orWhere('status', false)
-                  ->orWhere('status', 0);
-            })
+            ->where('status', 'pending')
             ->with(['factory', 'products'])
             ->get();
 
         $deliveredOrders = Order::where('supplier_id', $supplierId)
             ->where('order_type', 'supplier')
-            ->where(function($q) {
-                $q->whereIn('status', ['accepted', 'delivered'])
-                  ->orWhere('status', true)
-                  ->orWhere('status', 1);
-            })
+            ->whereIn('status', ['accepted', 'delivered'])
             ->with(['factory', 'products'])
             ->get();
 
@@ -56,7 +48,10 @@ class DashboardController extends Controller
 
         // Get counts for overview cards
         $totalProducts = Product::where('supplier_id', $supplierId)->count();
-        $pendingOrdersCount = $pendingOrders->count();
+        $pendingOrdersCount = Order::where('supplier_id', $supplierId)
+            ->where('order_type', 'supplier')
+            ->where('status', 'pending')
+            ->count();
         $lowStockItems = Inventory::whereHas('product', function($query) use ($supplierId) {
             $query->where('supplier_id', $supplierId);
         })->where('quantity', '<=', 10)->count();

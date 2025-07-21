@@ -15,7 +15,6 @@ class FactoryUserSeeder extends Seeder
             'email' => 'factory@scms.com',
             'password' => Hash::make('factory123'),
             'role' => 'factory',
-            'email_verified_at' => now(),
         ]);
 
         // Create a Factory record for this user

@@ -9,44 +9,44 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::table('inventory_alerts', function (Blueprint $table) {
+        Schema::table('retailer_inventory_alerts', function (Blueprint $table) {
             // Rename item_id to product_id
-            if (Schema::hasColumn('inventory_alerts', 'item_id') && !Schema::hasColumn('inventory_alerts', 'product_id')) {
+            if (Schema::hasColumn('retailer_inventory_alerts', 'item_id') && !Schema::hasColumn('retailer_inventory_alerts', 'product_id')) {
                 $table->renameColumn('item_id', 'product_id');
             }
 
             // Add new columns if they do not exist
-            if (!Schema::hasColumn('inventory_alerts', 'is_active')) {
+            if (!Schema::hasColumn('retailer_inventory_alerts', 'is_active')) {
                 $table->boolean('is_active')->default(true);
             }
-            if (!Schema::hasColumn('inventory_alerts', 'last_checked_at')) {
+            if (!Schema::hasColumn('retailer_inventory_alerts', 'last_checked_at')) {
                 $table->timestamp('last_checked_at')->nullable();
             }
-            if (!Schema::hasColumn('inventory_alerts', 'alert_frequency')) {
+            if (!Schema::hasColumn('retailer_inventory_alerts', 'alert_frequency')) {
                 $table->integer('alert_frequency')->default(1); // in days
             }
-            if (!Schema::hasColumn('inventory_alerts', 'alert_method')) {
+            if (!Schema::hasColumn('retailer_inventory_alerts', 'alert_method')) {
                 $table->string('alert_method')->default('email'); // email, sms, both
             }
-            if (!Schema::hasColumn('inventory_alerts', 'notes')) {
+            if (!Schema::hasColumn('retailer_inventory_alerts', 'notes')) {
                 $table->text('notes')->nullable();
             }
 
             // Update existing columns
-            if (Schema::hasColumn('inventory_alerts', 'alert_type')) {
+            if (Schema::hasColumn('retailer_inventory_alerts', 'alert_type')) {
                 $table->string('alert_type')->change();
             }
-            if (Schema::hasColumn('inventory_alerts', 'message')) {
+            if (Schema::hasColumn('retailer_inventory_alerts', 'message')) {
                 $table->text('message')->change();
             }
-            if (Schema::hasColumn('inventory_alerts', 'status')) {
+            if (Schema::hasColumn('retailer_inventory_alerts', 'status')) {
                 $table->boolean('status')->change();
             }
         });
 
         // Add foreign key constraint if not exists
-        if (!DB::select("SELECT * FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_NAME = 'inventory_alerts' AND COLUMN_NAME = 'product_id' AND REFERENCED_TABLE_NAME = 'products'")) {
-            Schema::table('inventory_alerts', function (Blueprint $table) {
+        if (!DB::select("SELECT * FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_NAME = 'retailer_inventory_alerts' AND COLUMN_NAME = 'product_id' AND REFERENCED_TABLE_NAME = 'products'")) {
+            Schema::table('retailer_inventory_alerts', function (Blueprint $table) {
                 $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
             });
         }
@@ -54,7 +54,7 @@ return new class extends Migration
 
     public function down()
     {
-        Schema::table('inventory_alerts', function (Blueprint $table) {
+        Schema::table('retailer_inventory_alerts', function (Blueprint $table) {
             // Drop foreign key
             $table->dropForeign(['product_id']);
 

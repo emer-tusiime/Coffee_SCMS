@@ -27,7 +27,6 @@
                             </thead>
                             <tbody>
                                 @foreach($pendingOrders as $order)
-                                    @if(!$order->status)
                                     <tr>
                                         <td>#{{ $order->id }}</td>
                                         <td>{{ $order->factory->name }}</td>
@@ -47,7 +46,6 @@
                                             </button>
                                         </td>
                                     </tr>
-                                    @endif
                                 @endforeach
                             </tbody>
                         </table>

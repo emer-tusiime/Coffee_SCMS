@@ -65,7 +65,25 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Helper: Generate color palette
+    function getColorPalette(count, alpha = 0.5) {
+        const palette = [
+            'rgba(54, 162, 235, ALPHA)',   // blue
+            'rgba(255, 99, 132, ALPHA)',   // red
+            'rgba(255, 206, 86, ALPHA)',   // yellow
+            'rgba(75, 192, 192, ALPHA)',   // teal
+            'rgba(153, 102, 255, ALPHA)',  // purple
+            'rgba(255, 159, 64, ALPHA)',   // orange
+            'rgba(40, 167, 69, ALPHA)',    // green
+            'rgba(255, 99, 255, ALPHA)',   // pink
+            'rgba(99, 255, 132, ALPHA)',   // light green
+            'rgba(99, 132, 255, ALPHA)'    // light blue
+        ];
+        return Array.from({length: count}, (_, i) => palette[i % palette.length].replace('ALPHA', alpha));
+    }
+
     // Top Selling Products Charts
+    const supplierColors = getColorPalette({{ $topSupplierProducts->count() }});
     new Chart(document.getElementById('topSupplierProductsChart').getContext('2d'), {
         type: 'bar',
         data: {
@@ -73,10 +91,11 @@ document.addEventListener('DOMContentLoaded', function() {
             datasets: [{
                 label: 'Total Sold',
                 data: {!! json_encode($topSupplierProducts->pluck('total_quantity')) !!},
-                backgroundColor: 'rgba(54, 162, 235, 0.5)'
+                backgroundColor: supplierColors
             }]
         }
     });
+    const factoryColors = getColorPalette({{ $topFactoryProducts->count() }}, 0.5);
     new Chart(document.getElementById('topFactoryProductsChart').getContext('2d'), {
         type: 'bar',
         data: {
@@ -84,10 +103,11 @@ document.addEventListener('DOMContentLoaded', function() {
             datasets: [{
                 label: 'Total Sold',
                 data: {!! json_encode($topFactoryProducts->pluck('total_quantity')) !!},
-                backgroundColor: 'rgba(255, 99, 132, 0.5)'
+                backgroundColor: factoryColors
             }]
         }
     });
+    const wholesalerColors = getColorPalette({{ $topWholesalerProducts->count() }}, 0.5);
     new Chart(document.getElementById('topWholesalerProductsChart').getContext('2d'), {
         type: 'bar',
         data: {
@@ -95,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
             datasets: [{
                 label: 'Total Sold',
                 data: {!! json_encode($topWholesalerProducts->pluck('total_quantity')) !!},
-                backgroundColor: 'rgba(255, 206, 86, 0.5)'
+                backgroundColor: wholesalerColors
             }]
         }
     });
