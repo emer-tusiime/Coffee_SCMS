@@ -1,0 +1,157 @@
+<template>
+  <div class="profile-picture-container">
+    <!-- Display Profile Picture -->
+    <img 
+      :src="profilePictureUrl" 
+      :alt="user.name + ' profile picture'"
+      class="profile-picture"
+      @error="handleImageError"
+    />
+    
+    <!-- Upload Form -->
+    <form @submit.prevent="uploadProfilePicture" enctype="multipart/form-data">
+      <input 
+        type="file" 
+        ref="fileInput"
+        @change="handleFileSelect"
+        accept="image/*"
+        style="display: none"
+      />
+      <button type="button" @click="$refs.fileInput.click()" class="upload-btn">
+        Change Profile Picture
+      </button>
+      <button v-if="selectedFile" type="submit" class="save-btn">
+        Save Picture
+      </button>
+    </form>
+  </div>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      profilePictureUrl: '',
+      selectedFile: null,
+      defaultAvatar: '/images/default-avatar.png'
+    };
+  },
+
+  computed: {
+    user() {
+      return this.$page.props.auth.user;
+    }
+  },
+
+  mounted() {
+    this.loadProfilePicture();
+  },
+
+  methods: {
+    loadProfilePicture() {
+      // Try to load user's profile picture
+      if (this.user.profile_picture_url) {
+        this.profilePictureUrl = this.user.profile_picture_url;
+      } else {
+        this.profilePictureUrl = this.defaultAvatar;
+      }
+    },
+
+    handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (file) {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          alert('Please select an image file');
+          return;
+        }
+
+        // Validate file size (2MB limit)
+        if (file.size > 2 * 1024 * 1024) {
+          alert('File size must be less than 2MB');
+          return;
+        }
+
+        this.selectedFile = file;
+        
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          this.profilePictureUrl = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    },
+
+    async uploadProfilePicture() {
+      if (!this.selectedFile) return;
+
+      const formData = new FormData();
+      formData.append('profile_picture', this.selectedFile);
+
+      try {
+        const response = await axios.post('/profile/upload-picture', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+
+        if (response.data.success) {
+          this.profilePictureUrl = response.data.profile_picture_url;
+          this.selectedFile = null;
+          this.$refs.fileInput.value = '';
+          
+          // Update user data in the page props if using Inertia
+          this.$page.props.auth.user.profile_picture_url = response.data.profile_picture_url;
+        }
+      } catch (error) {
+        console.error('Upload failed:', error);
+        alert('Failed to upload profile picture');
+        this.loadProfilePicture(); // Reset to original
+      }
+    },
+
+    handleImageError() {
+      // Fallback to default avatar if image fails to load
+      this.profilePictureUrl = this.defaultAvatar;
+    }
+  }
+};
+</script>
+
+<style scoped>
+.profile-picture-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.profile-picture {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.upload-btn, .save-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.upload-btn {
+  background: #2196f3;
+  color: white;
+}
+
+.save-btn {
+  background: #4caf50;
+  color: white;
+  margin-left: 0.5rem;
+}
+</style>
