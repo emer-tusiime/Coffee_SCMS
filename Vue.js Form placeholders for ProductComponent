@@ -1,0 +1,523 @@
+<template>
+  <div class="product-container">
+    <div class="product-header">
+      <h4>Product Management</h4>
+      <button @click="showAddModal = true" class="btn-primary">Add Product</button>
+    </div>
+
+    <div class="product-grid">
+      <div class="product-card" v-for="product in products" :key="product.id">
+        <h5>{{ product.name }}</h5>
+        <p><strong>Category:</strong> {{ product.category.name }}</p>
+        <p><strong>Price:</strong> ${{ product.price }}</p>
+        <p><strong>Stock:</strong> {{ product.stock }} units</p>
+        <div class="product-actions">
+          <button @click="editProduct(product)" class="btn-edit">Edit</button>
+          <button @click="deleteProduct(product.id)" class="btn-delete">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div v-if="showAddModal || showEditModal" class="modal-overlay">
+      <div class="modal">
+        <h4>{{ isEditing ? 'Edit Product' : 'Add Product' }}</h4>
+        <form @submit.prevent="saveProduct">
+          <div class="form-group">
+            <label>Name</label>
+            <input 
+              v-model="productForm.name" 
+              placeholder="Enter product name (e.g., Colombian Coffee Beans)"
+              required 
+            />
+          </div>
+          
+          <div class="form-group">
+            <label>Description</label>
+            <textarea 
+              v-model="productForm.description" 
+              placeholder="Describe your product features, origin, and quality..."
+              required
+            ></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label>Price</label>
+            <input 
+              type="number" 
+              v-model="productForm.price" 
+              placeholder="0.00"
+              step="0.01"
+              min="0"
+              required 
+            />
+          </div>
+          
+          <div class="form-group">
+            <label>Stock</label>
+            <input 
+              type="number" 
+              v-model="productForm.stock" 
+              placeholder="Available quantity"
+              min="0"
+              required 
+            />
+          </div>
+          
+          <div class="form-group">
+            <label>Category</label>
+            <select v-model="productForm.category_id" required>
+              <option value="">Select a category</option>
+              <option v-for="category in categories" :key="category.id" :value="category.id">
+                {{ category.name }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Additional Email-related Fields (if needed for supplier contact) -->
+          <div class="form-group" v-if="showSupplierFields">
+            <label>Supplier Email</label>
+            <input 
+              type="email" 
+              v-model="productForm.supplier_email" 
+              placeholder="supplier@example.com"
+            />
+          </div>
+
+          <div class="form-group" v-if="showSupplierFields">
+            <label>Contact Email for Orders</label>
+            <input 
+              type="email" 
+              v-model="productForm.order_email" 
+              placeholder="orders@supplier-company.com"
+            />
+          </div>
+
+          <div class="modal-actions">
+            <button type="submit" class="btn-primary">
+              {{ isEditing ? 'Update Product' : 'Create Product' }}
+            </button>
+            <button type="button" @click="closeModal" class="btn-secondary">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Search/Filter Section (with email search if needed) -->
+    <div class="search-section" v-if="showSearch">
+      <div class="search-row">
+        <input 
+          type="text" 
+          v-model="searchQuery" 
+          placeholder="Search products by name, category, or supplier..."
+          class="search-input"
+        />
+        <input 
+          type="email" 
+          v-model="supplierEmailFilter" 
+          placeholder="Filter by supplier email"
+          class="search-input"
+        />
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import { defineComponent } from 'vue';
+import { usePage } from '@inertiajs/vue3';
+
+export default defineComponent({
+  data() {
+    return {
+      products: [],
+      categories: [],
+      showAddModal: false,
+      showEditModal: false,
+      showSupplierFields: false, // Toggle for additional email fields
+      showSearch: true, // Toggle for search section
+      isEditing: false,
+      searchQuery: '',
+      supplierEmailFilter: '',
+      productForm: {
+        id: null,
+        name: '',
+        description: '',
+        price: '',
+        stock: '',
+        category_id: '',
+        supplier_email: '', // Additional email field
+        order_email: '', // Additional email field
+      },
+      // Email validation patterns
+      emailPattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+    };
+  },
+
+  computed: {
+    Auth() {
+      return usePage().props.auth;
+    },
+    
+    // Filter products based on search
+    filteredProducts() {
+      let filtered = this.products;
+      
+      if (this.searchQuery) {
+        filtered = filtered.filter(product => 
+          product.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+          product.category.name.toLowerCase().includes(this.searchQuery.toLowerCase())
+        );
+      }
+      
+      if (this.supplierEmailFilter) {
+        filtered = filtered.filter(product => 
+          product.supplier_email && 
+          product.supplier_email.toLowerCase().includes(this.supplierEmailFilter.toLowerCase())
+        );
+      }
+      
+      return filtered;
+    }
+  },
+
+  mounted() {
+    this.loadProducts();
+    this.loadCategories();
+    this.listenForUpdates();
+  },
+
+  methods: {
+    async loadProducts() {
+      try {
+        const response = await axios.get(route('supplier.products.index'));
+        this.products = response.data;
+      } catch (error) {
+        console.error('Error loading products:', error);
+        this.showNotification('Failed to load products', 'error');
+      }
+    },
+
+    async loadCategories() {
+      try {
+        const response = await axios.get(route('supplier.categories'));
+        this.categories = response.data;
+      } catch (error) {
+        console.error('Error loading categories:', error);
+        this.showNotification('Failed to load categories', 'error');
+      }
+    },
+
+    editProduct(product) {
+      this.isEditing = true;
+      this.productForm = { 
+        ...product,
+        supplier_email: product.supplier_email || '',
+        order_email: product.order_email || ''
+      };
+      this.showEditModal = true;
+    },
+
+    async deleteProduct(id) {
+      if (!confirm('Are you sure you want to delete this product?')) return;
+
+      try {
+        await axios.delete(route('supplier.products.destroy', id));
+        this.loadProducts();
+        this.showNotification('Product deleted successfully', 'success');
+      } catch (error) {
+        console.error('Error deleting product:', error);
+        this.showNotification('Failed to delete product', 'error');
+      }
+    },
+
+    async saveProduct() {
+      // Validate email fields if they're filled
+      if (this.productForm.supplier_email && !this.emailPattern.test(this.productForm.supplier_email)) {
+        this.showNotification('Please enter a valid supplier email address', 'error');
+        return;
+      }
+      
+      if (this.productForm.order_email && !this.emailPattern.test(this.productForm.order_email)) {
+        this.showNotification('Please enter a valid order email address', 'error');
+        return;
+      }
+
+      try {
+        const routeName = this.isEditing ? 'supplier.products.update' : 'supplier.products.store';
+        const response = await axios[this.isEditing ? 'put' : 'post'](
+          route(routeName, this.isEditing ? this.productForm.id : null),
+          this.productForm
+        );
+
+        this.closeModal();
+        this.loadProducts();
+        this.showNotification(
+          this.isEditing ? 'Product updated successfully' : 'Product created successfully', 
+          'success'
+        );
+      } catch (error) {
+        console.error('Error saving product:', error);
+        this.showNotification('Failed to save product', 'error');
+      }
+    },
+
+    closeModal() {
+      this.showAddModal = false;
+      this.showEditModal = false;
+      this.isEditing = false;
+      this.productForm = {
+        id: null,
+        name: '',
+        description: '',
+        price: '',
+        stock: '',
+        category_id: '',
+        supplier_email: '',
+        order_email: '',
+      };
+    },
+
+    listenForUpdates() {
+      window.Echo.private(`product.${this.Auth.user.id}`)
+        .listen('.product-update', (e) => {
+          this.loadProducts();
+        });
+    },
+
+    // Utility method for notifications
+    showNotification(message, type = 'info') {
+      // You can integrate with a notification library here
+      // For now, just using alert as placeholder
+      if (type === 'error') {
+        alert('Error: ' + message);
+      } else {
+        console.log(type + ': ' + message);
+      }
+    },
+
+    // Method to toggle supplier fields
+    toggleSupplierFields() {
+      this.showSupplierFields = !this.showSupplierFields;
+    }
+  },
+});
+</script>
+
+<style scoped>
+.product-container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.product-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.search-section {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 0.5rem;
+}
+
+.search-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+}
+
+.search-input {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.95rem;
+}
+
+.search-input::placeholder {
+  color: #999;
+  font-style: italic;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.product-card {
+  background: #fff;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.product-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #2196f3;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: #999;
+  font-style: italic;
+}
+
+.form-group textarea {
+  height: 100px;
+  resize: vertical;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal h4 {
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+}
+
+.btn-primary {
+  background: #2196f3;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.btn-primary:hover {
+  background: #1976d2;
+}
+
+.btn-secondary {
+  background: #ddd;
+  color: #333;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: #bbb;
+}
+
+.btn-edit {
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background-color 0.2s ease;
+}
+
+.btn-edit:hover {
+  background: #388e3c;
+}
+
+.btn-delete {
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background-color 0.2s ease;
+}
+
+.btn-delete:hover {
+  background: #d32f2f;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .search-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .product-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .modal {
+    width: 95%;
+    padding: 1rem;
+  }
+}</style>
